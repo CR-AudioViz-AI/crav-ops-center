@@ -858,20 +858,67 @@
                     label: 'Claude AI',
                     data: [],
                     borderColor: '#667eea',
-                    tension: 0.4
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4,
+                    fill: false
                 },
                 {
                     label: 'OpenAI',
                     data: [],
                     borderColor: '#10b981',
-                    tension: 0.4
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4,
+                    fill: false
+                },
+                {
+                    label: 'Azure OpenAI',
+                    data: [],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    fill: false
+                },
+                {
+                    label: 'Replicate',
+                    data: [],
+                    borderColor: '#8b5cf6',
+                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                    tension: 0.4,
+                    fill: false
+                },
+                {
+                    label: 'Stability AI',
+                    data: [],
+                    borderColor: '#ec4899',
+                    backgroundColor: 'rgba(236, 72, 153, 0.1)',
+                    tension: 0.4,
+                    fill: false
+                },
+                {
+                    label: 'Pinecone',
+                    data: [],
+                    borderColor: '#f97316',
+                    backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                    tension: 0.4,
+                    fill: false
+                },
+                {
+                    label: 'Cohere',
+                    data: [],
+                    borderColor: '#06b6d4',
+                    backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                    tension: 0.4,
+                    fill: false
                 },
                 {
                     label: 'Average',
                     data: [],
                     borderColor: '#f59e0b',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
                     tension: 0.4,
-                    borderDash: [5, 5]
+                    borderDash: [5, 5],
+                    borderWidth: 2,
+                    fill: false
                 }
             ]
         };
@@ -919,8 +966,8 @@
                 let offline = 0;
                 const responseTimes = [];
                 
-                aiServices.forEach(service => {
-                    const isOnline = Math.random() > 0.1;
+                aiServices.forEach((service, index) => {
+                    const isOnline = Math.random() > 0.1; // 90% uptime simulation
                     const responseTime = isOnline ? Math.floor(Math.random() * 200 + 50) : 0;
                     
                     if (isOnline) {
@@ -928,6 +975,7 @@
                         responseTimes.push(responseTime);
                     } else {
                         offline++;
+                        responseTimes.push(0);
                     }
                     
                     const item = document.createElement('div');
@@ -949,20 +997,35 @@
                 document.getElementById('services-uptime').textContent = 
                     ((online / aiServices.length) * 100).toFixed(1) + '%';
                 
-                // Update AI chart
+                // Update AI chart - ALL 7 SERVICES + AVERAGE
                 const now = new Date().toLocaleTimeString();
                 aiData.labels.push(now);
-                aiData.datasets[0].data.push(responseTimes[0] || 0);
-                aiData.datasets[1].data.push(responseTimes[1] || 0);
-                const avg = responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length;
-                aiData.datasets[2].data.push(avg);
                 
+                // Add data for each of the 7 services
+                aiData.datasets[0].data.push(responseTimes[0] || 0); // Claude AI
+                aiData.datasets[1].data.push(responseTimes[1] || 0); // OpenAI
+                aiData.datasets[2].data.push(responseTimes[2] || 0); // Azure OpenAI
+                aiData.datasets[3].data.push(responseTimes[3] || 0); // Replicate
+                aiData.datasets[4].data.push(responseTimes[4] || 0); // Stability AI
+                aiData.datasets[5].data.push(responseTimes[5] || 0); // Pinecone
+                aiData.datasets[6].data.push(responseTimes[6] || 0); // Cohere
+                
+                // Calculate and add average (exclude zeros from offline services)
+                const activeResponses = responseTimes.filter(rt => rt > 0);
+                const avg = activeResponses.length > 0 ? 
+                    activeResponses.reduce((a, b) => a + b, 0) / activeResponses.length : 0;
+                aiData.datasets[7].data.push(avg); // Average
+                
+                // Keep only last 20 data points
                 if (aiData.labels.length > 20) {
                     aiData.labels.shift();
                     aiData.datasets.forEach(ds => ds.data.shift());
                 }
                 
                 if (aiChart) aiChart.update();
+                
+                // Log the check
+                logIncident(`✅ AI Services checked: ${online} online, ${offline} offline`, 'success');
             }, 1000);
         }
 
