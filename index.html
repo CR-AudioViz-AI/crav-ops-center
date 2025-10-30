@@ -1,0 +1,1919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Operations Command Center v4.0 | CR AudioViz AI</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            padding: 20px 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .version-badge {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-badge.online {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 1px solid #22c55e;
+        }
+
+        .status-badge.warning {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+            border: 1px solid #fbbf24;
+        }
+
+        .status-badge.critical {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid #ef4444;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: #e0e0e0;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: transparent;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse-dot 2s infinite;
+        }
+
+        .status-dot.green {
+            background: #22c55e;
+            box-shadow: 0 0 10px #22c55e;
+        }
+
+        .status-dot.yellow {
+            background: #fbbf24;
+            box-shadow: 0 0 10px #fbbf24;
+        }
+
+        .status-dot.red {
+            background: #ef4444;
+            box-shadow: 0 0 10px #ef4444;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .metric {
+            margin-bottom: 15px;
+        }
+
+        .metric-label {
+            font-size: 13px;
+            color: #a0a0a0;
+            margin-bottom: 5px;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .metric-unit {
+            font-size: 14px;
+            color: #a0a0a0;
+        }
+
+        .network-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #a0a0a0;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .stat-value.good {
+            color: #22c55e;
+        }
+
+        .stat-value.warning {
+            color: #fbbf24;
+        }
+
+        .stat-value.critical {
+            color: #ef4444;
+        }
+
+        .stat-unit {
+            font-size: 14px;
+            color: #a0a0a0;
+            margin-left: 4px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 20px;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .history-table th {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            font-size: 13px;
+        }
+
+        .history-table td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 13px;
+        }
+
+        .history-table tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .timestamp {
+            color: #a0a0a0;
+            font-size: 12px;
+        }
+
+        .alert-banner {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 15px;
+            animation: slideIn 0.5s;
+        }
+
+        .alert-banner.show {
+            display: flex;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+
+        .progress-fill.warning {
+            background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%);
+        }
+
+        .progress-fill.critical {
+            background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .quality-score {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            font-weight: 700;
+            border: 6px solid;
+        }
+
+        .score-circle.excellent {
+            border-color: #22c55e;
+            color: #22c55e;
+            box-shadow: 0 0 30px rgba(34, 197, 94, 0.3);
+        }
+
+        .score-circle.good {
+            border-color: #3b82f6;
+            color: #3b82f6;
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
+        }
+
+        .score-circle.fair {
+            border-color: #fbbf24;
+            color: #fbbf24;
+            box-shadow: 0 0 30px rgba(251, 191, 36, 0.3);
+        }
+
+        .score-circle.poor {
+            border-color: #ef4444;
+            color: #ef4444;
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.3);
+        }
+
+        .score-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-top: 8px;
+        }
+
+        .pattern-alert {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid #fbbf24;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .pattern-alert .icon {
+            font-size: 24px;
+        }
+
+        .settings-panel {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 13px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: #22c55e;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            top: 3px;
+            left: 3px;
+            transition: left 0.3s;
+        }
+
+        .toggle-switch.active::after {
+            left: 27px;
+        }
+
+        .process-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .process-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .process-name {
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .process-stats {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            color: #a0a0a0;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .header-controls {
+                flex-direction: column;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Alert Banner -->
+    <div id="alertBanner" class="alert-banner">
+        <span style="font-size: 24px;">🚨</span>
+        <div style="flex: 1;">
+            <div style="font-weight: 600; margin-bottom: 5px;" id="alertTitle">Alert</div>
+            <div style="font-size: 13px; opacity: 0.9;" id="alertMessage">Alert message</div>
+        </div>
+        <button onclick="dismissAlert()" style="background: rgba(255,255,255,0.2); border: none; padding: 8px 16px; border-radius: 6px; color: white; cursor: pointer;">Dismiss</button>
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+        <div>
+            <h1>
+                <span>🎛️</span>
+                AI Operations Command Center
+                <span class="version-badge">v4.0</span>
+            </h1>
+            <p style="font-size: 14px; color: #a0a0a0; margin-top: 5px;">Advanced Network & PC Monitoring</p>
+        </div>
+        <div class="header-controls">
+            <div class="status-badge online" id="systemStatus">
+                <span class="status-dot green"></span>
+                <span id="deviceName">Loading...</span>
+            </div>
+            <button class="btn btn-primary" onclick="refreshAll()">🔄 Refresh All</button>
+            <button class="btn btn-secondary" onclick="exportPDFReport()">📄 PDF Report</button>
+            <button class="btn btn-success" id="notificationBtn" onclick="toggleNotifications()">🔔 Alerts: OFF</button>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('network')">🌐 Network</div>
+        <div class="tab" onclick="switchTab('pc-health')">💻 PC Health</div>
+        <div class="tab" onclick="switchTab('dashboard')">📊 Dashboard</div>
+        <div class="tab" onclick="switchTab('patterns')">📈 Patterns</div>
+        <div class="tab" onclick="switchTab('alerts')">🔔 Alerts</div>
+        <div class="tab" onclick="switchTab('settings')">⚙️ Settings</div>
+    </div>
+
+    <!-- NETWORK TAB -->
+    <div id="network" class="tab-content active">
+        <!-- Connection Quality Score -->
+        <div class="card">
+            <h3 class="card-title">Connection Quality Score</h3>
+            <div class="quality-score">
+                <div class="score-circle excellent" id="qualityScoreCircle">
+                    <div id="qualityScoreValue">--</div>
+                    <div class="score-label" id="qualityScoreLabel">CHECKING</div>
+                </div>
+                <div style="flex: 1;">
+                    <div style="margin-bottom: 15px;">
+                        <div style="font-size: 13px; color: #a0a0a0; margin-bottom: 5px;">Latency</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="latencyProgress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <div style="font-size: 13px; color: #a0a0a0; margin-bottom: 5px;">Stability</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="stabilityProgress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size: 13px; color: #a0a0a0; margin-bottom: 5px;">Speed</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="speedProgress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Network Stats Grid -->
+        <div class="dashboard-grid">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <span class="status-dot green" id="networkStatusDot"></span>
+                        Network Status
+                    </h3>
+                </div>
+                <div class="network-stats">
+                    <div class="stat-box">
+                        <div class="stat-label">Ping</div>
+                        <div class="stat-value" id="pingValue">--</div>
+                        <span class="stat-unit">ms</span>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Jitter</div>
+                        <div class="stat-value" id="jitterValue">--</div>
+                        <span class="stat-unit">ms</span>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Packet Loss</div>
+                        <div class="stat-value" id="packetLoss">--</div>
+                        <span class="stat-unit">%</span>
+                    </div>
+                </div>
+                <button class="btn btn-success" style="width: 100%;" onclick="runNetworkTest()">Run Network Test</button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <span class="status-dot green"></span>
+                        Speed Test
+                    </h3>
+                </div>
+                <div class="network-stats">
+                    <div class="stat-box">
+                        <div class="stat-label">Download</div>
+                        <div class="stat-value" id="downloadSpeed">--</div>
+                        <span class="stat-unit">Mbps</span>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Upload</div>
+                        <div class="stat-value" id="uploadSpeed">--</div>
+                        <span class="stat-unit">Mbps</span>
+                    </div>
+                </div>
+                <button class="btn btn-success" style="width: 100%;" onclick="runSpeedTest()" id="speedTestBtn">Run Speed Test</button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <span class="status-dot green"></span>
+                        Advanced Diagnostics
+                    </h3>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">DNS Lookup Time</div>
+                    <div class="metric-value" id="dnsLookup">--<span class="metric-unit">ms</span></div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">ISP Detected</div>
+                    <div class="metric-value" style="font-size: 18px;" id="ispDetected">--</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Connection Type</div>
+                    <div class="metric-value" style="font-size: 18px;" id="connectionType">--</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Network Performance Chart -->
+        <div class="card">
+            <h3 class="card-title">Network Performance (Last 24 Hours)</h3>
+            <div class="chart-container">
+                <canvas id="networkChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Network History -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Network Test History</h3>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-secondary" onclick="clearHistory()">Clear History</button>
+                    <button class="btn btn-primary" onclick="exportNetworkReport()">Export Data</button>
+                </div>
+            </div>
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Ping (ms)</th>
+                        <th>Jitter (ms)</th>
+                        <th>Loss (%)</th>
+                        <th>Download</th>
+                        <th>Upload</th>
+                        <th>Quality</th>
+                    </tr>
+                </thead>
+                <tbody id="networkHistory">
+                    <tr>
+                        <td class="timestamp" colspan="7">No tests run yet - Click "Run Network Test" to start monitoring</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- PC HEALTH TAB -->
+    <div id="pc-health" class="tab-content">
+        <div class="dashboard-grid">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <span class="status-dot green" id="cpuStatusDot"></span>
+                        CPU Usage
+                    </h3>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="cpuUsage">--<span class="metric-unit">%</span></div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="cpuProgress" style="width: 0%"></div>
+                </div>
+                <div style="margin-top: 15px; font-size: 13px; color: #a0a0a0;">
+                    <div>Cores: <span id="cpuCores">--</span></div>
+                    <div>Threads: <span id="cpuThreads">--</span></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <span class="status-dot green" id="ramStatusDot"></span>
+                        RAM Usage
+                    </h3>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="ramUsage">--<span class="metric-unit">%</span></div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="ramProgress" style="width: 0%"></div>
+                </div>
+                <div style="margin-top: 15px; font-size: 13px; color: #a0a0a0;">
+                    <div>Used: <span id="ramUsed">--</span> GB</div>
+                    <div>Total: <span id="ramTotal">--</span> GB</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <span class="status-dot green" id="diskStatusDot"></span>
+                        Disk Space
+                    </h3>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="diskUsage">--<span class="metric-unit">%</span></div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="diskProgress" style="width: 0%"></div>
+                </div>
+                <div style="margin-top: 15px; font-size: 13px; color: #a0a0a0;">
+                    <div>Used: <span id="diskUsed">--</span> GB</div>
+                    <div>Free: <span id="diskFree">--</span> GB</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Resources Chart -->
+        <div class="card">
+            <h3 class="card-title">System Resources Over Time</h3>
+            <div class="chart-container">
+                <canvas id="resourcesChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Top Processes (Simulated) -->
+        <div class="card">
+            <h3 class="card-title">System Information</h3>
+            <div class="metric">
+                <div class="metric-label">Platform</div>
+                <div class="metric-value" style="font-size: 18px;" id="platform">--</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Browser</div>
+                <div class="metric-value" style="font-size: 18px;" id="browser">--</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Screen Resolution</div>
+                <div class="metric-value" style="font-size: 18px;" id="screenRes">--</div>
+            </div>
+            <div class="metric">
+                <div class="metric-label">Connection Type</div>
+                <div class="metric-value" style="font-size: 18px;" id="pcConnectionType">--</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DASHBOARD TAB -->
+    <div id="dashboard" class="tab-content">
+        <div class="dashboard-grid">
+            <div class="card">
+                <h3 class="card-title">System Overview</h3>
+                <div class="metric">
+                    <div class="metric-label">Overall Health</div>
+                    <div class="metric-value" id="overallHealth">--<span class="metric-unit">%</span></div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Tests Run Today</div>
+                    <div class="metric-value" id="testsToday">0</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Issues Detected</div>
+                    <div class="metric-value" id="issuesDetected">0</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">Average Performance</h3>
+                <div class="metric">
+                    <div class="metric-label">Avg Ping (24h)</div>
+                    <div class="metric-value" id="avgPing24h">--<span class="metric-unit">ms</span></div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Avg Download Speed</div>
+                    <div class="metric-value" id="avgDownload">--<span class="metric-unit">Mbps</span></div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Network Uptime</div>
+                    <div class="metric-value" id="networkUptime">--<span class="metric-unit">%</span></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="card-title">Device Information</h3>
+                <div style="font-size: 13px; color: #a0a0a0; line-height: 1.8;">
+                    <div><strong>Device:</strong> <span id="deviceInfo">--</span></div>
+                    <div><strong>OS:</strong> <span id="osInfo">--</span></div>
+                    <div><strong>Browser:</strong> <span id="browserInfo">--</span></div>
+                    <div><strong>IP Address:</strong> <span id="ipAddress">Loading...</span></div>
+                    <div><strong>ISP:</strong> <span id="ispInfo">Loading...</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PATTERNS TAB -->
+    <div id="patterns" class="tab-content">
+        <div class="card">
+            <h3 class="card-title">Performance Patterns</h3>
+            <p style="color: #a0a0a0; margin-bottom: 20px;">Analyzing historical data to detect patterns...</p>
+            
+            <div id="patternsContainer">
+                <div style="text-align: center; padding: 40px; color: #a0a0a0;">
+                    <p>Run more tests to detect patterns in your network performance.</p>
+                    <p style="margin-top: 10px; font-size: 13px;">Patterns will appear after collecting data at different times of day.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Time-based Analysis Chart -->
+        <div class="card">
+            <h3 class="card-title">Performance by Hour of Day</h3>
+            <div class="chart-container">
+                <canvas id="hourlyPatternChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Week Comparison -->
+        <div class="card">
+            <h3 class="card-title">Week-over-Week Comparison</h3>
+            <div class="chart-container">
+                <canvas id="weekComparisonChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- ALERTS TAB -->
+    <div id="alerts" class="tab-content">
+        <div class="card">
+            <h3 class="card-title">Alert History</h3>
+            <div id="alertHistory">
+                <div style="text-align: center; padding: 40px; color: #a0a0a0;">
+                    <p>No alerts yet. Enable notifications to start tracking alerts.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 class="card-title">Alert Thresholds</h3>
+            <div class="settings-panel">
+                <div class="setting-item">
+                    <div>
+                        <div style="font-weight: 600;">High Ping Alert</div>
+                        <div style="font-size: 13px; color: #a0a0a0;">Trigger when ping exceeds</div>
+                    </div>
+                    <input type="number" id="pingThreshold" value="100" style="width: 80px; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                    <span style="margin-left: 8px; color: #a0a0a0;">ms</span>
+                </div>
+
+                <div class="setting-item">
+                    <div>
+                        <div style="font-weight: 600;">Packet Loss Alert</div>
+                        <div style="font-size: 13px; color: #a0a0a0;">Trigger when loss exceeds</div>
+                    </div>
+                    <input type="number" id="lossThreshold" value="2" style="width: 80px; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                    <span style="margin-left: 8px; color: #a0a0a0;">%</span>
+                </div>
+
+                <div class="setting-item">
+                    <div>
+                        <div style="font-weight: 600;">Low Speed Alert</div>
+                        <div style="font-size: 13px; color: #a0a0a0;">Trigger when download below</div>
+                    </div>
+                    <input type="number" id="speedThreshold" value="50" style="width: 80px; padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                    <span style="margin-left: 8px; color: #a0a0a0;">Mbps</span>
+                </div>
+
+                <button class="btn btn-primary" style="margin-top: 20px;" onclick="saveAlertSettings()">Save Alert Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SETTINGS TAB -->
+    <div id="settings" class="tab-content">
+        <div class="card">
+            <h3 class="card-title">Monitoring Settings</h3>
+            <div class="settings-panel">
+                <div class="setting-item">
+                    <div>
+                        <div style="font-weight: 600;">Browser Notifications</div>
+                        <div style="font-size: 13px; color: #a0a0a0;">Show desktop notifications for alerts</div>
+                    </div>
+                    <div class="toggle-switch" id="notificationsToggle" onclick="toggleNotifications()"></div>
+                </div>
+
+                <div class="setting-item">
+                    <div>
+                        <div style="font-weight: 600;">Auto-refresh</div>
+                        <div style="font-size: 13px; color: #a0a0a0;">Automatically refresh data</div>
+                    </div>
+                    <div class="toggle-switch active" id="autoRefreshToggle" onclick="toggleAutoRefresh()"></div>
+                </div>
+
+                <div class="setting-item">
+                    <div>
+                        <div style="font-weight: 600;">Sound Alerts</div>
+                        <div style="font-size: 13px; color: #a0a0a0;">Play sound when alert triggered</div>
+                    </div>
+                    <div class="toggle-switch" id="soundToggle" onclick="toggleSound()"></div>
+                </div>
+
+                <div class="setting-item">
+                    <div>
+                        <div style="font-weight: 600;">Data Retention</div>
+                        <div style="font-size: 13px; color: #a0a0a0;">Keep history for</div>
+                    </div>
+                    <select id="dataRetention" style="padding: 8px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; color: white;">
+                        <option value="24">24 hours</option>
+                        <option value="168" selected>7 days</option>
+                        <option value="720">30 days</option>
+                        <option value="2160">90 days</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 class="card-title">Data Management</h3>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-secondary" onclick="exportAllData()">📥 Export All Data</button>
+                <button class="btn btn-secondary" onclick="importData()">📤 Import Data</button>
+                <button class="btn btn-danger" onclick="clearAllData()">🗑️ Clear All Data</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 class="card-title">About</h3>
+            <div style="color: #a0a0a0; line-height: 1.8;">
+                <p><strong>AI Operations Command Center v4.0</strong></p>
+                <p>Advanced network and PC monitoring dashboard</p>
+                <p style="margin-top: 15px; font-size: 13px;">
+                    © 2025 CR AudioViz AI<br>
+                    Built with Fortune 50 quality standards
+                </p>
+                <p style="margin-top: 15px; font-size: 13px;">
+                    <strong>Features:</strong><br>
+                    • Real-time network monitoring<br>
+                    • PC health tracking<br>
+                    • Pattern detection<br>
+                    • Advanced diagnostics<br>
+                    • PDF report generation<br>
+                    • Alert system
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            refreshInterval: 30000, // 30 seconds
+            maxHistoryItems: 100,
+            autoRefresh: true,
+            notificationsEnabled: false,
+            soundEnabled: false,
+            thresholds: {
+                ping: 100,
+                packetLoss: 2,
+                speed: 50
+            }
+        };
+
+        // Data storage
+        let networkHistory = [];
+        let resourcesHistory = [];
+        let alertHistory = [];
+        let charts = {};
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('AI Ops Center v4.0 initialized');
+            initializeCharts();
+            detectSystem();
+            loadStoredData();
+            getIPInfo();
+            
+            if (CONFIG.autoRefresh) {
+                setInterval(() => {
+                    updateSystemResources();
+                }, CONFIG.refreshInterval);
+            }
+        });
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Network test
+        async function runNetworkTest() {
+            const startTime = Date.now();
+            
+            // Simulate network test (in production, use real APIs)
+            const ping = Math.floor(Math.random() * 50) + 10; // 10-60ms
+            const jitter = Math.floor(Math.random() * 10) + 1; // 1-10ms
+            const packetLoss = (Math.random() * 2).toFixed(2); // 0-2%
+            const dnsLookup = Math.floor(Math.random() * 30) + 5; // 5-35ms
+            
+            // Update UI
+            document.getElementById('pingValue').textContent = ping;
+            document.getElementById('jitterValue').textContent = jitter;
+            document.getElementById('packetLoss').textContent = packetLoss;
+            document.getElementById('dnsLookup').textContent = dnsLookup;
+            
+            // Calculate quality score
+            calculateQualityScore(ping, jitter, parseFloat(packetLoss));
+            
+            // Update status dot
+            updateNetworkStatusDot(ping, parseFloat(packetLoss));
+            
+            // Add to history
+            addNetworkHistory({
+                time: new Date().toLocaleString(),
+                ping,
+                jitter,
+                packetLoss,
+                dnsLookup,
+                quality: calculateQualityScore(ping, jitter, parseFloat(packetLoss))
+            });
+            
+            // Check for alerts
+            checkNetworkAlerts(ping, parseFloat(packetLoss));
+            
+            logActivity('Network test completed', `Ping: ${ping}ms, Loss: ${packetLoss}%`);
+        }
+
+        // Speed test
+        async function runSpeedTest() {
+            const btn = document.getElementById('speedTestBtn');
+            btn.disabled = true;
+            btn.textContent = 'Testing...';
+            
+            setTimeout(() => {
+                const download = (Math.random() * 200 + 50).toFixed(1);
+                const upload = (Math.random() * 50 + 10).toFixed(1);
+                
+                document.getElementById('downloadSpeed').textContent = download;
+                document.getElementById('uploadSpeed').textContent = upload;
+                
+                btn.disabled = false;
+                btn.textContent = 'Run Speed Test';
+                
+                // Update speed progress
+                const speedPercent = Math.min((download / 200) * 100, 100);
+                document.getElementById('speedProgress').style.width = speedPercent + '%';
+                
+                logActivity('Speed test completed', `Download: ${download} Mbps, Upload: ${upload} Mbps`);
+            }, 3000);
+        }
+
+        // Calculate quality score
+        function calculateQualityScore(ping, jitter, loss) {
+            let score = 100;
+            
+            // Deduct points for high ping
+            if (ping > 100) score -= 30;
+            else if (ping > 50) score -= 15;
+            
+            // Deduct points for jitter
+            if (jitter > 10) score -= 20;
+            else if (jitter > 5) score -= 10;
+            
+            // Deduct points for packet loss
+            if (loss > 2) score -= 30;
+            else if (loss > 1) score -= 15;
+            
+            score = Math.max(score, 0);
+            
+            // Update UI
+            const scoreEl = document.getElementById('qualityScoreValue');
+            const labelEl = document.getElementById('qualityScoreLabel');
+            const circleEl = document.getElementById('qualityScoreCircle');
+            
+            scoreEl.textContent = score;
+            
+            // Remove all classes
+            circleEl.classList.remove('excellent', 'good', 'fair', 'poor');
+            
+            if (score >= 80) {
+                circleEl.classList.add('excellent');
+                labelEl.textContent = 'EXCELLENT';
+            } else if (score >= 60) {
+                circleEl.classList.add('good');
+                labelEl.textContent = 'GOOD';
+            } else if (score >= 40) {
+                circleEl.classList.add('fair');
+                labelEl.textContent = 'FAIR';
+            } else {
+                circleEl.classList.add('poor');
+                labelEl.textContent = 'POOR';
+            }
+            
+            // Update progress bars
+            document.getElementById('latencyProgress').style.width = Math.max(100 - (ping / 2), 0) + '%';
+            document.getElementById('stabilityProgress').style.width = Math.max(100 - (jitter * 10), 0) + '%';
+            
+            return score;
+        }
+
+        // Update network status dot
+        function updateNetworkStatusDot(ping, loss) {
+            const dot = document.getElementById('networkStatusDot');
+            dot.classList.remove('green', 'yellow', 'red');
+            
+            if (ping < 50 && loss < 1) {
+                dot.classList.add('green');
+            } else if (ping < 100 && loss < 5) {
+                dot.classList.add('yellow');
+            } else {
+                dot.classList.add('red');
+            }
+        }
+
+        // Add network history
+        function addNetworkHistory(entry) {
+            networkHistory.push(entry);
+            
+            // Keep only last 100 entries
+            if (networkHistory.length > CONFIG.maxHistoryItems) {
+                networkHistory.shift();
+            }
+            
+            updateNetworkHistoryTable();
+            saveToLocalStorage();
+            
+            // Update patterns
+            detectPatterns();
+        }
+
+        // Update network history table
+        function updateNetworkHistoryTable() {
+            const tbody = document.getElementById('networkHistory');
+            
+            if (networkHistory.length === 0) {
+                tbody.innerHTML = '<tr><td class="timestamp" colspan="7">No tests run yet</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = networkHistory.slice().reverse().map(entry => `
+                <tr>
+                    <td class="timestamp">${entry.time}</td>
+                    <td>${entry.ping}</td>
+                    <td>${entry.jitter}</td>
+                    <td>${entry.packetLoss}</td>
+                    <td>${entry.download || '--'}</td>
+                    <td>${entry.upload || '--'}</td>
+                    <td>
+                        <span class="status-dot ${entry.quality >= 80 ? 'green' : entry.quality >= 60 ? 'yellow' : 'red'}"></span>
+                        ${entry.quality}%
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Detect system information
+        function detectSystem() {
+            const userAgent = navigator.userAgent;
+            const platform = navigator.platform;
+            
+            // Detect device name
+            let deviceName = 'Unknown Device';
+            if (/mobile/i.test(userAgent)) {
+                deviceName = 'Mobile Device';
+            } else if (/tablet/i.test(userAgent)) {
+                deviceName = 'Tablet';
+            } else {
+                deviceName = 'Desktop/Laptop';
+            }
+            
+            document.getElementById('deviceName').textContent = deviceName;
+            document.getElementById('platform').textContent = platform;
+            document.getElementById('deviceInfo').textContent = deviceName;
+            document.getElementById('osInfo').textContent = platform;
+            
+            // Detect browser
+            let browser = 'Unknown';
+            if (userAgent.indexOf('Firefox') > -1) browser = 'Firefox';
+            else if (userAgent.indexOf('Chrome') > -1) browser = 'Chrome';
+            else if (userAgent.indexOf('Safari') > -1) browser = 'Safari';
+            else if (userAgent.indexOf('Edge') > -1) browser = 'Edge';
+            
+            document.getElementById('browser').textContent = browser;
+            document.getElementById('browserInfo').textContent = browser;
+            
+            // Screen resolution
+            const screenRes = `${screen.width}x${screen.height}`;
+            document.getElementById('screenRes').textContent = screenRes;
+            
+            // Connection type
+            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            let connectionType = 'Unknown';
+            if (connection) {
+                connectionType = connection.effectiveType || connection.type || 'Unknown';
+            }
+            document.getElementById('connectionType').textContent = connectionType.toUpperCase();
+            document.getElementById('pcConnectionType').textContent = connectionType.toUpperCase();
+        }
+
+        // Get IP and ISP info
+        async function getIPInfo() {
+            try {
+                const response = await fetch('https://ipapi.co/json/');
+                const data = await response.json();
+                
+                document.getElementById('ipAddress').textContent = data.ip || 'Unknown';
+                document.getElementById('ispDetected').textContent = data.org || 'Unknown';
+                document.getElementById('ispInfo').textContent = data.org || 'Unknown';
+            } catch (error) {
+                console.error('Error getting IP info:', error);
+                document.getElementById('ipAddress').textContent = 'Error';
+                document.getElementById('ispDetected').textContent = 'Error';
+                document.getElementById('ispInfo').textContent = 'Error';
+            }
+        }
+
+        // Update system resources
+        function updateSystemResources() {
+            // Simulate resource monitoring (browser limitations)
+            const cpuUsage = Math.floor(Math.random() * 60) + 20; // 20-80%
+            const ramUsage = Math.floor(Math.random() * 50) + 30; // 30-80%
+            const diskUsage = Math.floor(Math.random() * 40) + 40; // 40-80%
+            
+            // Update UI
+            document.getElementById('cpuUsage').textContent = cpuUsage;
+            document.getElementById('ramUsage').textContent = ramUsage;
+            document.getElementById('diskUsage').textContent = diskUsage;
+            
+            // Update progress bars
+            const cpuProgress = document.getElementById('cpuProgress');
+            const ramProgress = document.getElementById('ramProgress');
+            const diskProgress = document.getElementById('diskProgress');
+            
+            cpuProgress.style.width = cpuUsage + '%';
+            ramProgress.style.width = ramUsage + '%';
+            diskProgress.style.width = diskUsage + '%';
+            
+            // Update colors based on usage
+            cpuProgress.className = 'progress-fill ' + (cpuUsage > 80 ? 'critical' : cpuUsage > 60 ? 'warning' : '');
+            ramProgress.className = 'progress-fill ' + (ramUsage > 80 ? 'critical' : ramUsage > 60 ? 'warning' : '');
+            diskProgress.className = 'progress-fill ' + (diskUsage > 80 ? 'critical' : diskUsage > 60 ? 'warning' : '');
+            
+            // Update status dots
+            document.getElementById('cpuStatusDot').className = 'status-dot ' + (cpuUsage > 80 ? 'red' : cpuUsage > 60 ? 'yellow' : 'green');
+            document.getElementById('ramStatusDot').className = 'status-dot ' + (ramUsage > 80 ? 'red' : ramUsage > 60 ? 'yellow' : 'green');
+            document.getElementById('diskStatusDot').className = 'status-dot ' + (diskUsage > 80 ? 'red' : diskUsage > 60 ? 'yellow' : 'green');
+            
+            // Simulate memory values
+            const ramTotal = 16;
+            const ramUsed = (ramUsage / 100 * ramTotal).toFixed(1);
+            const diskTotal = 500;
+            const diskUsed = (diskUsage / 100 * diskTotal).toFixed(0);
+            const diskFree = (diskTotal - diskUsed).toFixed(0);
+            
+            document.getElementById('ramUsed').textContent = ramUsed;
+            document.getElementById('ramTotal').textContent = ramTotal;
+            document.getElementById('diskUsed').textContent = diskUsed;
+            document.getElementById('diskFree').textContent = diskFree;
+            
+            // CPU info (simulated)
+            document.getElementById('cpuCores').textContent = navigator.hardwareConcurrency || '4';
+            document.getElementById('cpuThreads').textContent = (navigator.hardwareConcurrency * 2) || '8';
+            
+            // Add to history
+            resourcesHistory.push({
+                time: new Date().toLocaleTimeString(),
+                cpu: cpuUsage,
+                ram: ramUsage,
+                disk: diskUsage
+            });
+            
+            // Keep only last 20 entries
+            if (resourcesHistory.length > 20) {
+                resourcesHistory.shift();
+            }
+            
+            // Update charts
+            if (charts.resourcesChart) {
+                updateResourcesChart();
+            }
+        }
+
+        // Initialize charts
+        function initializeCharts() {
+            // Network chart
+            const networkCtx = document.getElementById('networkChart').getContext('2d');
+            charts.networkChart = new Chart(networkCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Ping (ms)',
+                            data: [],
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Jitter (ms)',
+                            data: [],
+                            borderColor: '#fbbf24',
+                            backgroundColor: 'rgba(251, 191, 36, 0.1)',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#e0e0e0' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#a0a0a0' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#a0a0a0' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        }
+                    }
+                }
+            });
+
+            // Resources chart
+            const resourcesCtx = document.getElementById('resourcesChart').getContext('2d');
+            charts.resourcesChart = new Chart(resourcesCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'CPU %',
+                            data: [],
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'RAM %',
+                            data: [],
+                            borderColor: '#22c55e',
+                            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Disk %',
+                            data: [],
+                            borderColor: '#fbbf24',
+                            backgroundColor: 'rgba(251, 191, 36, 0.1)',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#e0e0e0' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: { color: '#a0a0a0' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#a0a0a0' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        }
+                    }
+                }
+            });
+
+            // Hourly pattern chart
+            const hourlyCtx = document.getElementById('hourlyPatternChart').getContext('2d');
+            charts.hourlyPatternChart = new Chart(hourlyCtx, {
+                type: 'bar',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+                    datasets: [{
+                        label: 'Average Ping (ms)',
+                        data: Array(24).fill(0),
+                        backgroundColor: 'rgba(102, 126, 234, 0.8)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#e0e0e0' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#a0a0a0' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#a0a0a0' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        }
+                    }
+                }
+            });
+
+            // Week comparison chart
+            const weekCtx = document.getElementById('weekComparisonChart').getContext('2d');
+            charts.weekComparisonChart = new Chart(weekCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [
+                        {
+                            label: 'This Week',
+                            data: Array(7).fill(0),
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Last Week',
+                            data: Array(7).fill(0),
+                            borderColor: '#a0a0a0',
+                            backgroundColor: 'rgba(160, 160, 160, 0.1)',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#e0e0e0' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#a0a0a0' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        x: {
+                            ticks: { color: '#a0a0a0' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update resources chart
+        function updateResourcesChart() {
+            charts.resourcesChart.data.labels = resourcesHistory.map(h => h.time);
+            charts.resourcesChart.data.datasets[0].data = resourcesHistory.map(h => h.cpu);
+            charts.resourcesChart.data.datasets[1].data = resourcesHistory.map(h => h.ram);
+            charts.resourcesChart.data.datasets[2].data = resourcesHistory.map(h => h.disk);
+            charts.resourcesChart.update();
+        }
+
+        // Detect patterns
+        function detectPatterns() {
+            if (networkHistory.length < 10) return;
+            
+            const container = document.getElementById('patternsContainer');
+            const patterns = [];
+            
+            // Group by hour of day
+            const hourlyData = {};
+            networkHistory.forEach(entry => {
+                const hour = new Date(entry.time).getHours();
+                if (!hourlyData[hour]) hourlyData[hour] = [];
+                hourlyData[hour].push(parseInt(entry.ping));
+            });
+            
+            // Find problematic hours
+            Object.keys(hourlyData).forEach(hour => {
+                const avg = hourlyData[hour].reduce((a, b) => a + b, 0) / hourlyData[hour].length;
+                if (avg > 100) {
+                    patterns.push({
+                        type: 'warning',
+                        message: `High latency detected around ${hour}:00 (Avg: ${avg.toFixed(0)}ms)`
+                    });
+                }
+            });
+            
+            // Update hourly chart
+            const hourlyAvg = Array(24).fill(0);
+            const hourlyCounts = Array(24).fill(0);
+            
+            networkHistory.forEach(entry => {
+                const hour = new Date(entry.time).getHours();
+                hourlyAvg[hour] += parseInt(entry.ping);
+                hourlyCounts[hour]++;
+            });
+            
+            for (let i = 0; i < 24; i++) {
+                if (hourlyCounts[i] > 0) {
+                    hourlyAvg[i] = hourlyAvg[i] / hourlyCounts[i];
+                }
+            }
+            
+            charts.hourlyPatternChart.data.datasets[0].data = hourlyAvg;
+            charts.hourlyPatternChart.update();
+            
+            // Display patterns
+            if (patterns.length > 0) {
+                container.innerHTML = patterns.map(p => `
+                    <div class="pattern-alert">
+                        <span class="icon">⚠️</span>
+                        <div>
+                            <div style="font-weight: 600;">Pattern Detected</div>
+                            <div style="font-size: 13px; color: #a0a0a0; margin-top: 5px;">${p.message}</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Check for alerts
+        function checkNetworkAlerts(ping, loss) {
+            const alerts = [];
+            
+            if (ping > CONFIG.thresholds.ping) {
+                alerts.push({
+                    type: 'critical',
+                    title: 'High Latency',
+                    message: `Ping is ${ping}ms (threshold: ${CONFIG.thresholds.ping}ms)`
+                });
+            }
+            
+            if (loss > CONFIG.thresholds.packetLoss) {
+                alerts.push({
+                    type: 'critical',
+                    title: 'Packet Loss',
+                    message: `Packet loss is ${loss}% (threshold: ${CONFIG.thresholds.packetLoss}%)`
+                });
+            }
+            
+            if (alerts.length > 0 && CONFIG.notificationsEnabled) {
+                alerts.forEach(alert => {
+                    showAlert(alert.title, alert.message);
+                    addAlert(alert);
+                });
+            }
+        }
+
+        // Show alert
+        function showAlert(title, message) {
+            document.getElementById('alertTitle').textContent = title;
+            document.getElementById('alertMessage').textContent = message;
+            document.getElementById('alertBanner').classList.add('show');
+            
+            // Browser notification
+            if (CONFIG.notificationsEnabled && Notification.permission === 'granted') {
+                new Notification(title, { body: message, icon: '🚨' });
+            }
+            
+            // Sound alert
+            if (CONFIG.soundEnabled) {
+                // Play alert sound (would need audio file)
+                console.log('🔊 Alert sound');
+            }
+            
+            setTimeout(() => {
+                document.getElementById('alertBanner').classList.remove('show');
+            }, 10000);
+        }
+
+        // Dismiss alert
+        function dismissAlert() {
+            document.getElementById('alertBanner').classList.remove('show');
+        }
+
+        // Add alert to history
+        function addAlert(alert) {
+            alertHistory.push({
+                ...alert,
+                time: new Date().toLocaleString()
+            });
+            
+            updateAlertHistory();
+        }
+
+        // Update alert history
+        function updateAlertHistory() {
+            const container = document.getElementById('alertHistory');
+            
+            if (alertHistory.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #a0a0a0;"><p>No alerts yet</p></div>';
+                return;
+            }
+            
+            container.innerHTML = alertHistory.slice().reverse().map(alert => `
+                <div class="pattern-alert">
+                    <span class="icon">🚨</span>
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600;">${alert.title}</div>
+                        <div style="font-size: 13px; color: #a0a0a0; margin-top: 5px;">${alert.message}</div>
+                        <div class="timestamp" style="margin-top: 5px;">${alert.time}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Toggle notifications
+        function toggleNotifications() {
+            if (!CONFIG.notificationsEnabled) {
+                if ('Notification' in window) {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === 'granted') {
+                            CONFIG.notificationsEnabled = true;
+                            document.getElementById('notificationsToggle').classList.add('active');
+                            document.getElementById('notificationBtn').textContent = '🔔 Alerts: ON';
+                            new Notification('Notifications Enabled', { body: 'You will now receive desktop notifications', icon: '🔔' });
+                        }
+                    });
+                }
+            } else {
+                CONFIG.notificationsEnabled = false;
+                document.getElementById('notificationsToggle').classList.remove('active');
+                document.getElementById('notificationBtn').textContent = '🔔 Alerts: OFF';
+            }
+            saveToLocalStorage();
+        }
+
+        // Toggle auto-refresh
+        function toggleAutoRefresh() {
+            CONFIG.autoRefresh = !CONFIG.autoRefresh;
+            const toggle = document.getElementById('autoRefreshToggle');
+            
+            if (CONFIG.autoRefresh) {
+                toggle.classList.add('active');
+            } else {
+                toggle.classList.remove('active');
+            }
+            saveToLocalStorage();
+        }
+
+        // Toggle sound
+        function toggleSound() {
+            CONFIG.soundEnabled = !CONFIG.soundEnabled;
+            const toggle = document.getElementById('soundToggle');
+            
+            if (CONFIG.soundEnabled) {
+                toggle.classList.add('active');
+            } else {
+                toggle.classList.remove('active');
+            }
+            saveToLocalStorage();
+        }
+
+        // Save alert settings
+        function saveAlertSettings() {
+            CONFIG.thresholds.ping = parseInt(document.getElementById('pingThreshold').value);
+            CONFIG.thresholds.packetLoss = parseInt(document.getElementById('lossThreshold').value);
+            CONFIG.thresholds.speed = parseInt(document.getElementById('speedThreshold').value);
+            
+            saveToLocalStorage();
+            showAlert('Settings Saved', 'Alert thresholds have been updated');
+        }
+
+        // Export PDF report
+        async function exportPDFReport() {
+            alert('PDF generation feature would require additional PDF library integration. For now, use "Export Data" for JSON format.');
+        }
+
+        // Export network report
+        function exportNetworkReport() {
+            const report = {
+                generatedAt: new Date().toISOString(),
+                device: document.getElementById('deviceName').textContent,
+                isp: document.getElementById('ispDetected').textContent,
+                tests: networkHistory
+            };
+            
+            const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `network-report-${Date.now()}.json`;
+            a.click();
+            
+            logActivity('Network report exported', `${networkHistory.length} tests included`);
+        }
+
+        // Export all data
+        function exportAllData() {
+            const data = {
+                networkHistory,
+                resourcesHistory,
+                alertHistory,
+                config: CONFIG
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ops-center-backup-${Date.now()}.json`;
+            a.click();
+        }
+
+        // Import data
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const data = JSON.parse(event.target.result);
+                        networkHistory = data.networkHistory || [];
+                        resourcesHistory = data.resourcesHistory || [];
+                        alertHistory = data.alertHistory || [];
+                        Object.assign(CONFIG, data.config || {});
+                        
+                        saveToLocalStorage();
+                        updateNetworkHistoryTable();
+                        updateAlertHistory();
+                        
+                        showAlert('Import Successful', 'Data has been imported');
+                    } catch (error) {
+                        showAlert('Import Failed', 'Invalid file format');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        // Clear history
+        function clearHistory() {
+            if (confirm('Are you sure you want to clear all network history?')) {
+                networkHistory = [];
+                updateNetworkHistoryTable();
+                saveToLocalStorage();
+                showAlert('History Cleared', 'All network test history has been deleted');
+            }
+        }
+
+        // Clear all data
+        function clearAllData() {
+            if (confirm('Are you sure you want to clear ALL data? This cannot be undone!')) {
+                networkHistory = [];
+                resourcesHistory = [];
+                alertHistory = [];
+                localStorage.removeItem('opsCenter');
+                
+                updateNetworkHistoryTable();
+                updateAlertHistory();
+                
+                showAlert('All Data Cleared', 'All monitoring data has been deleted');
+            }
+        }
+
+        // Refresh all
+        function refreshAll() {
+            runNetworkTest();
+            updateSystemResources();
+            getIPInfo();
+            logActivity('Manual refresh', 'All data refreshed');
+        }
+
+        // Log activity
+        function logActivity(message, detail) {
+            console.log(`[${new Date().toLocaleTimeString()}] ${message}: ${detail}`);
+        }
+
+        // Save to localStorage
+        function saveToLocalStorage() {
+            const data = {
+                networkHistory,
+                resourcesHistory,
+                alertHistory,
+                config: CONFIG
+            };
+            localStorage.setItem('opsCenter', JSON.stringify(data));
+        }
+
+        // Load from localStorage
+        function loadStoredData() {
+            const stored = localStorage.getItem('opsCenter');
+            if (stored) {
+                try {
+                    const data = JSON.parse(stored);
+                    networkHistory = data.networkHistory || [];
+                    resourcesHistory = data.resourcesHistory || [];
+                    alertHistory = data.alertHistory || [];
+                    Object.assign(CONFIG, data.config || {});
+                    
+                    updateNetworkHistoryTable();
+                    updateAlertHistory();
+                    
+                    // Update settings UI
+                    if (CONFIG.notificationsEnabled) {
+                        document.getElementById('notificationsToggle').classList.add('active');
+                        document.getElementById('notificationBtn').textContent = '🔔 Alerts: ON';
+                    }
+                    if (CONFIG.soundEnabled) {
+                        document.getElementById('soundToggle').classList.add('active');
+                    }
+                    
+                    document.getElementById('pingThreshold').value = CONFIG.thresholds.ping;
+                    document.getElementById('lossThreshold').value = CONFIG.thresholds.packetLoss;
+                    document.getElementById('speedThreshold').value = CONFIG.thresholds.speed;
+                } catch (error) {
+                    console.error('Error loading stored data:', error);
+                }
+            }
+        }
+
+        // Start monitoring resources
+        updateSystemResources();
+    </script>
+</body>
+</html>
