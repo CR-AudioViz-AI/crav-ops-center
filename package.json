@@ -1,0 +1,14 @@
+{
+  "name": "ai-ops-center",
+  "version": "3.1.0",
+  "description": "AI Operations Command Center v3.1 for CR AudioViz AI",
+  "main": "index.html",
+  "scripts": {
+    "start": "serve .",
+    "build": "echo 'Static site - no build needed'"
+  },
+  "keywords": ["monitoring", "ai", "operations", "network"],
+  "author": "Roy - CR AudioViz AI",
+  "license": "UNLICENSED",
+  "private": true
+}
