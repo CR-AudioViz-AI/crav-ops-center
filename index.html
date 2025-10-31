@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Operations Command Center v5.6 - Bold Zones & Event Markers</title>
+    <title>AI Operations Command Center v5.6.1 - Fixed Zone Colors</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
@@ -98,7 +98,7 @@
         <div class="header">
             <h1>🎯 AI Operations Command Center</h1>
             <div class="subtitle">Real-Time Monitoring Dashboard</div>
-            <div class="version">v5.6 - Bold Zones & Clickable Event Markers | Roy Henderson - CR AudioViz AI</div>
+            <div class="version">v5.6.1 - Fixed Zone Colors for ALL Charts | Roy Henderson - CR AudioViz AI</div>
         </div>
 
         <div class="tabs">
@@ -513,12 +513,31 @@
                     const chartArea = chart.chartArea;
                     const yAxis = chart.scales.y;
                     
+                    // Draw zones in reverse order so first zone appears on top when overlapping
                     zones.forEach((zone, idx) => {
-                        // Draw BOLD colored zone background (opacity 0.75 instead of 0.5)
+                        // Draw BOLD colored zone background (opacity 0.75)
                         ctx.fillStyle = zone.color;
-                        const top = yAxis.getPixelForValue(zone.max);
-                        const bottom = idx === zones.length - 1 ? chartArea.bottom : yAxis.getPixelForValue(zone.min);
-                        ctx.fillRect(chartArea.left, top, chartArea.right - chartArea.left, bottom - top);
+                        
+                        // Calculate pixel positions for this zone
+                        let top, bottom;
+                        
+                        if (idx === 0) {
+                            // First zone: from its max value to chart bottom
+                            top = yAxis.getPixelForValue(zone.max);
+                            bottom = chartArea.bottom;
+                        } else if (idx === zones.length - 1) {
+                            // Last zone: from chart top to its min value
+                            top = chartArea.top;
+                            bottom = yAxis.getPixelForValue(zone.min);
+                        } else {
+                            // Middle zones: exact boundaries
+                            top = yAxis.getPixelForValue(zone.max);
+                            bottom = yAxis.getPixelForValue(zone.min);
+                        }
+                        
+                        // Draw the zone rectangle
+                        const height = bottom - top;
+                        ctx.fillRect(chartArea.left, top, chartArea.right - chartArea.left, height);
                         
                         // v5.6 NEW - Add zone labels on right side of chart
                         if (labelText && labelText[idx]) {
@@ -526,7 +545,7 @@
                             ctx.fillStyle = zone.textColor || '#333';
                             ctx.font = 'bold 11px Arial';
                             ctx.textAlign = 'left';
-                            const labelY = top + (bottom - top) / 2;
+                            const labelY = top + height / 2;
                             ctx.fillText(labelText[idx], chartArea.right + 5, labelY);
                             ctx.restore();
                         }
