@@ -3,1112 +3,290 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Operations Command Center v5.6.2 - Restored PC Cleanup Buttons</title>
+    <title>AI Operations Command Center v6.0 - REAL Monitoring</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            min-height: 100vh; 
+            padding: 20px; 
+        }
         .container { max-width: 1400px; margin: 0 auto; }
-        .header { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); margin-bottom: 30px; text-align: center; }
+        .header { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 15px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
+            margin-bottom: 30px; 
+            text-align: center; 
+        }
         .header h1 { color: #667eea; font-size: 2.5em; margin-bottom: 10px; }
         .header .subtitle { color: #666; font-size: 1.1em; }
         .header .version { color: #764ba2; font-weight: bold; margin-top: 10px; }
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .tab-btn { flex: 1; min-width: 120px; padding: 15px 20px; background: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .tab-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
-        .tab-btn.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px; }
-        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        .card h2 { color: #667eea; margin-bottom: 15px; font-size: 1.4em; }
-        .metric { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #eee; }
-        .metric:last-child { border-bottom: none; }
-        .metric-label { font-weight: 600; color: #444; }
-        .metric-value { font-size: 1.3em; font-weight: bold; }
-        .status-good { color: #10b981; }
-        .status-warning { color: #f59e0b; }
-        .status-critical { color: #ef4444; }
-        .btn { display: inline-block; padding: 12px 24px; margin: 10px 5px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
+        
+        .config-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .config-modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+        }
+        .config-modal h2 { color: #667eea; margin-bottom: 20px; }
+        .config-group { margin-bottom: 20px; }
+        .config-group label { display: block; font-weight: 600; margin-bottom: 5px; color: #333; }
+        .config-group input { width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; }
+        .btn { 
+            display: inline-block; 
+            padding: 12px 24px; 
+            margin: 10px 5px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 14px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+        }
         .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.2); }
         .btn-secondary { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
-        .btn-danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
-        .btn-warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
-        .btn-small { padding: 8px 16px; font-size: 12px; margin: 5px 2px; }
-        .chart-container { height: 300px; margin-top: 20px; position: relative; }
+        
+        .status-indicator { 
+            display: inline-block; 
+            padding: 8px 16px; 
+            border-radius: 20px; 
+            font-weight: 600; 
+            margin-top: 10px; 
+            font-size: 14px;
+        }
+        .status-indicator.live { background: #10b981; color: white; }
+        .status-indicator.connecting { background: #f59e0b; color: white; }
+        .status-indicator.error { background: #ef4444; color: white; }
+        
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab-btn { 
+            flex: 1; 
+            min-width: 140px; 
+            padding: 15px 20px; 
+            background: white; 
+            border: none; 
+            border-radius: 10px; 
+            font-size: 14px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+        }
+        .tab-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
+        .tab-btn.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .card { 
+            background: white; 
+            padding: 25px; 
+            border-radius: 15px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
+        }
+        .card h2 { color: #667eea; margin-bottom: 15px; font-size: 1.4em; }
+        
         .service-list { display: grid; gap: 15px; }
-        .service-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid; }
+        .service-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 15px; 
+            background: #f8f9fa; 
+            border-radius: 8px; 
+            border-left: 4px solid; 
+        }
         .service-item.online { border-left-color: #10b981; }
+        .service-item.degraded { border-left-color: #f59e0b; }
         .service-item.offline { border-left-color: #ef4444; }
+        .service-item.checking { border-left-color: #94a3b8; }
+        
         .service-name { font-weight: 600; font-size: 1.1em; }
-        .service-status { display: flex; align-items: center; gap: 10px; }
-        .status-badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
+        .service-details { font-size: 12px; color: #666; margin-top: 5px; }
+        
+        .status-badge { 
+            padding: 6px 12px; 
+            border-radius: 20px; 
+            font-size: 12px; 
+            font-weight: 600; 
+            text-transform: uppercase; 
+        }
         .status-badge.online { background: #10b981; color: white; }
+        .status-badge.degraded { background: #f59e0b; color: white; }
         .status-badge.offline { background: #ef4444; color: white; }
+        .status-badge.checking { background: #94a3b8; color: white; }
+        
         .loading { text-align: center; padding: 20px; color: #667eea; }
+        .spinner { 
+            border: 3px solid #f3f4f6; 
+            border-top: 3px solid #667eea; 
+            border-radius: 50%; 
+            width: 40px; 
+            height: 40px; 
+            animation: spin 1s linear infinite; 
+            margin: 20px auto; 
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
         .alert { padding: 15px; margin: 10px 0; border-radius: 8px; font-weight: 500; }
-        .alert-success { background: #d1fae5; color: #065f46; border-left: 4px solid #10b981; }
+        .alert-info { background: #dbeafe; color: #1e40af; border-left: 4px solid #3b82f6; }
         .alert-warning { background: #fef3c7; color: #92400e; border-left: 4px solid #f59e0b; }
-        .alert-danger { background: #fee2e2; color: #991b1b; border-left: 4px solid #ef4444; }
         
-        /* v5.6 NEW - Bold Zone Labels */
-        .legend-zone { padding: 8px 12px; border-radius: 6px; text-align: center; font-size: 13px; font-weight: 600; }
-        .legend-zone.good { background: rgba(209, 250, 229, 0.8); color: #065f46; border: 2px solid #10b981; }
-        .legend-zone.warning { background: rgba(254, 243, 199, 0.8); color: #92400e; border: 2px solid #f59e0b; }
-        .legend-zone.critical { background: rgba(254, 226, 226, 0.8); color: #991b1b; border: 2px solid #ef4444; }
-        
-        /* v5.6 NEW - Event Popup Modal */
-        .event-popup { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
-        .event-popup-content { background: white; margin: 10% auto; padding: 30px; border-radius: 15px; width: 90%; max-width: 500px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
-        .event-popup-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .event-popup-header h3 { color: #ef4444; font-size: 1.5em; }
-        .event-popup-close { font-size: 28px; font-weight: bold; color: #aaa; cursor: pointer; }
-        .event-popup-close:hover { color: #000; }
-        .event-detail { padding: 10px 0; border-bottom: 1px solid #eee; }
-        .event-detail:last-child { border-bottom: none; }
-        .event-detail-label { font-weight: 600; color: #667eea; margin-bottom: 5px; }
-        .event-detail-value { color: #444; font-size: 1.1em; }
-        
-        /* Time Frame Selector */
-        .time-frame-selector { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 15px 0; }
-        .time-frame-btn { padding: 8px 16px; background: #f3f4f6; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-        .time-frame-btn:hover { background: #e5e7eb; }
-        .time-frame-btn.active { background: #667eea; color: white; border-color: #667eea; }
-        
-        /* Date Picker */
-        .date-picker-group { display: flex; gap: 15px; align-items: flex-end; margin: 15px 0; padding: 15px; background: #f9fafb; border-radius: 8px; }
-        .date-picker-group label { display: block; font-weight: 600; margin-bottom: 5px; color: #667eea; font-size: 13px; }
-        .date-picker-group input { padding: 8px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; }
-        
-        /* Chart Legend */
-        .chart-legend { display: flex; flex-wrap: wrap; gap: 15px; margin: 15px 0; padding: 12px; background: #f9fafb; border-radius: 8px; }
-        .legend-item { display: flex; align-items: center; gap: 8px; }
-        .legend-color { width: 24px; height: 12px; border-radius: 3px; }
-        
-        /* Status Incidents */
-        .incident-list { margin-top: 20px; }
-        .incident-item { padding: 15px; margin: 10px 0; background: #fee2e2; border-left: 4px solid #ef4444; border-radius: 6px; }
-        .incident-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .incident-title { font-weight: 600; color: #991b1b; }
-        .incident-time { font-size: 12px; color: #666; }
-        .incident-details { font-size: 14px; color: #444; }
+        .error-message { 
+            background: #fee2e2; 
+            border: 2px solid #ef4444; 
+            color: #991b1b; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin: 10px 0; 
+        }
     </style>
 </head>
 <body>
+    <!-- Configuration Modal -->
+    <div id="configModal" class="config-modal" style="display: none;">
+        <div class="config-modal-content">
+            <h2>🔐 API Configuration</h2>
+            <p style="color: #666; margin-bottom: 20px;">Enter your API credentials to enable real monitoring. These are stored locally in your browser.</p>
+            
+            <div class="config-group">
+                <label>Vercel Token:</label>
+                <input type="password" id="vercel-token" placeholder="Your Vercel API token">
+            </div>
+            
+            <div class="config-group">
+                <label>Vercel Team ID:</label>
+                <input type="text" id="vercel-team" placeholder="team_...">
+            </div>
+            
+            <div class="config-group">
+                <label>GitHub Token:</label>
+                <input type="password" id="github-token" placeholder="Your GitHub personal access token">
+            </div>
+            
+            <div class="config-group">
+                <label>GitHub Org:</label>
+                <input type="text" id="github-org" placeholder="CR-AudioViz-AI">
+            </div>
+            
+            <button class="btn" onclick="saveConfig()">Save & Start Monitoring</button>
+            <button class="btn btn-secondary" onclick="skipConfig()">Skip (Demo Mode)</button>
+        </div>
+    </div>
+
     <div class="container">
         <div class="header">
             <h1>🎯 AI Operations Command Center</h1>
-            <div class="subtitle">Real-Time Monitoring Dashboard</div>
-            <div class="version">v5.6.2 - Complete: Zone Colors + PC Cleanup Buttons | Roy Henderson - CR AudioViz AI</div>
+            <div class="subtitle">Real-Time Production Monitoring</div>
+            <div class="version">v6.0 - REAL MONITORING (Secure) | Roy Henderson - CR AudioViz AI</div>
+            <div class="status-indicator connecting" id="connection-status">⚙️ Waiting for configuration...</div>
+            <br>
+            <button class="btn btn-secondary" onclick="showConfig()" style="margin-top: 15px;">⚙️ Configure APIs</button>
         </div>
 
         <div class="tabs">
-            <button class="tab-btn active" onclick="openTab('network')">📡 Network</button>
-            <button class="tab-btn" onclick="openTab('ai')">🤖 AI Services</button>
-            <button class="tab-btn" onclick="openTab('infrastructure')">🏗️ Infrastructure</button>
-            <button class="tab-btn" onclick="openTab('database')">🗄️ Database</button>
-            <button class="tab-btn" onclick="openTab('pc-health')">💻 PC Health</button>
-            <button class="tab-btn" onclick="openTab('status-alerts')">🚨 Status Alerts</button>
+            <button class="tab-btn active" onclick="openTab('infrastructure')">🏗️ Infrastructure</button>
+            <button class="tab-btn" onclick="openTab('network')">📡 Network</button>
+            <button class="tab-btn" onclick="openTab('status')">🚨 Status</button>
         </div>
 
-        <!-- v5.6 NEW - Event Popup Modal -->
-        <div id="eventPopup" class="event-popup">
-            <div class="event-popup-content">
-                <div class="event-popup-header">
-                    <h3>🚨 Event Details</h3>
-                    <span class="event-popup-close" onclick="closeEventPopup()">&times;</span>
+        <!-- INFRASTRUCTURE TAB -->
+        <div id="infrastructure-tab" class="tab-content active">
+            <div class="dashboard">
+                <div class="card">
+                    <h2>🚀 Vercel Projects</h2>
+                    <div id="vercel-status"></div>
                 </div>
-                <div id="eventPopupBody"></div>
+
+                <div class="card">
+                    <h2>📦 GitHub Repositories</h2>
+                    <div id="github-status"></div>
+                </div>
             </div>
         </div>
 
         <!-- NETWORK TAB -->
-        <div id="network-tab" class="tab-content active">
-            <div class="dashboard">
-                <div class="card">
-                    <h2>🌐 Live Network Status</h2>
-                    <div class="metric">
-                        <span class="metric-label">Current Latency</span>
-                        <span class="metric-value status-good" id="current-latency">-- ms</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">Network Health</span>
-                        <span class="metric-value status-good" id="network-health">Excellent</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">Connection</span>
-                        <span class="metric-value status-good" id="connection-status">Stable</span>
-                    </div>
-                    <button class="btn btn-secondary" onclick="testLatency()">🔄 Test Now</button>
-                    <button class="btn btn-small btn-danger" onclick="simulateOutage()">⚠️ Simulate Outage</button>
-                </div>
-            </div>
-
+        <div id="network-tab" class="tab-content">
             <div class="card">
-                <h2>📈 Network Latency History</h2>
-                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                    <div class="legend-zone good" style="flex: 1;">✅ Excellent: 0-50ms</div>
-                    <div class="legend-zone warning" style="flex: 1;">⚠️ Fair: 50-100ms</div>
-                    <div class="legend-zone critical" style="flex: 1;">❌ Poor: 100+ms</div>
-                </div>
-                
-                <div class="time-frame-selector">
-                    <span style="font-weight: 600; color: #667eea;">Time Range:</span>
-                    <button class="time-frame-btn active" onclick="setNetworkTimeFrame('1hr')">1 Hour</button>
-                    <button class="time-frame-btn" onclick="setNetworkTimeFrame('5hr')">5 Hours</button>
-                    <button class="time-frame-btn" onclick="setNetworkTimeFrame('12hr')">12 Hours</button>
-                    <button class="time-frame-btn" onclick="setNetworkTimeFrame('24hr')">24 Hours</button>
-                    <button class="time-frame-btn" onclick="setNetworkTimeFrame('36hr')">36 Hours</button>
-                    <button class="time-frame-btn" onclick="setNetworkTimeFrame('custom')">Custom Range</button>
-                </div>
-                
-                <div class="date-picker-group" id="network-custom-date-picker" style="display: none;">
-                    <div style="flex: 1;">
-                        <label>Start Date/Time:</label>
-                        <input type="datetime-local" id="network-start-date">
-                    </div>
-                    <div style="flex: 1;">
-                        <label>End Date/Time:</label>
-                        <input type="datetime-local" id="network-end-date">
-                    </div>
-                    <button class="btn" onclick="applyNetworkCustomRange()">Apply</button>
-                </div>
-                
-                <div class="chart-container">
-                    <canvas id="networkChart"></canvas>
-                </div>
+                <h2>🌐 Browser Network Info</h2>
+                <div id="network-info"></div>
+                <button class="btn btn-secondary" onclick="testNetwork()">🔄 Test Network</button>
             </div>
         </div>
 
-        <!-- AI SERVICES TAB -->
-        <div id="ai-tab" class="tab-content">
-            <div class="dashboard">
-                <div class="card">
-                    <h2>🤖 AI Service Status</h2>
-                    <div class="service-list" id="ai-services-list">
-                        <div class="loading">Checking AI services...</div>
-                    </div>
-                </div>
-            </div>
-
+        <!-- STATUS TAB -->
+        <div id="status-tab" class="tab-content">
             <div class="card">
-                <h2>⚡ AI Response Times</h2>
-                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                    <div class="legend-zone good" style="flex: 1;">✅ Fast: 0-500ms</div>
-                    <div class="legend-zone warning" style="flex: 1;">⚠️ Moderate: 500-2000ms</div>
-                    <div class="legend-zone critical" style="flex: 1;">❌ Slow: 2000+ms</div>
-                </div>
-                
-                <div class="time-frame-selector">
-                    <span style="font-weight: 600; color: #667eea;">Time Range:</span>
-                    <button class="time-frame-btn active" onclick="setAITimeFrame('1hr')">1 Hour</button>
-                    <button class="time-frame-btn" onclick="setAITimeFrame('5hr')">5 Hours</button>
-                    <button class="time-frame-btn" onclick="setAITimeFrame('12hr')">12 Hours</button>
-                    <button class="time-frame-btn" onclick="setAITimeFrame('24hr')">24 Hours</button>
-                    <button class="time-frame-btn" onclick="setAITimeFrame('36hr')">36 Hours</button>
-                    <button class="time-frame-btn" onclick="setAITimeFrame('custom')">Custom Range</button>
-                </div>
-                
-                <div class="date-picker-group" id="ai-custom-date-picker" style="display: none;">
-                    <div style="flex: 1;">
-                        <label>Start Date/Time:</label>
-                        <input type="datetime-local" id="ai-start-date">
-                    </div>
-                    <div style="flex: 1;">
-                        <label>End Date/Time:</label>
-                        <input type="datetime-local" id="ai-end-date">
-                    </div>
-                    <button class="btn" onclick="applyAICustomRange()">Apply</button>
-                </div>
-                
-                <div class="chart-legend">
-                    <div class="legend-item"><div class="legend-color" style="background: #ef4444;"></div><span>Claude</span></div>
-                    <div class="legend-item"><div class="legend-color" style="background: #10b981;"></div><span>OpenAI GPT</span></div>
-                    <div class="legend-item"><div class="legend-color" style="background: #3b82f6;"></div><span>Azure OpenAI</span></div>
-                    <div class="legend-item"><div class="legend-color" style="background: #f59e0b;"></div><span>Replicate</span></div>
-                    <div class="legend-item"><div class="legend-color" style="background: #8b5cf6;"></div><span>Stability AI</span></div>
-                    <div class="legend-item"><div class="legend-color" style="background: #ec4899;"></div><span>Pinecone</span></div>
-                    <div class="legend-item"><div class="legend-color" style="background: #14b8a6;"></div><span>Cohere</span></div>
-                </div>
-                
-                <div class="chart-container">
-                    <canvas id="aiChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- INFRASTRUCTURE TAB -->
-        <div id="infrastructure-tab" class="tab-content">
-            <div class="dashboard">
-                <div class="card">
-                    <h2>🏗️ Infrastructure Health</h2>
-                    <div class="service-list" id="infra-services-list">
-                        <div class="loading">Checking infrastructure...</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <h2>📊 Service Health Metrics</h2>
-                
-                <div class="time-frame-selector">
-                    <span style="font-weight: 600; color: #667eea;">Time Range:</span>
-                    <button class="time-frame-btn active" onclick="setInfraTimeFrame('1hr')">1 Hour</button>
-                    <button class="time-frame-btn" onclick="setInfraTimeFrame('5hr')">5 Hours</button>
-                    <button class="time-frame-btn" onclick="setInfraTimeFrame('12hr')">12 Hours</button>
-                    <button class="time-frame-btn" onclick="setInfraTimeFrame('24hr')">24 Hours</button>
-                    <button class="time-frame-btn" onclick="setInfraTimeFrame('36hr')">36 Hours</button>
-                    <button class="time-frame-btn" onclick="setInfraTimeFrame('custom')">Custom Range</button>
-                </div>
-                
-                <div class="date-picker-group" id="infra-custom-date-picker" style="display: none;">
-                    <div style="flex: 1;">
-                        <label>Start Date/Time:</label>
-                        <input type="datetime-local" id="infra-start-date">
-                    </div>
-                    <div style="flex: 1;">
-                        <label>End Date/Time:</label>
-                        <input type="datetime-local" id="infra-end-date">
-                    </div>
-                    <button class="btn" onclick="applyInfraCustomRange()">Apply</button>
-                </div>
-                
-                <div class="chart-legend">
-                    <div class="legend-item"><div class="legend-color" style="background: #8b5cf6;"></div><span>Vercel (17 Projects)</span></div>
-                    <div class="legend-item"><div class="legend-color" style="background: #10b981;"></div><span>GitHub (22 Repos)</span></div>
-                    <div class="legend-item"><div class="legend-color" style="background: #f59e0b;"></div><span>Supabase Database</span></div>
-                    <div class="legend-item"><div class="legend-color" style="background: #ef4444;"></div><span>Stripe Payments</span></div>
-                    <div class="legend-item"><div class="legend-color" style="background: #3b82f6;"></div><span>PayPal Payments</span></div>
-                </div>
-                
-                <div class="chart-container">
-                    <canvas id="infraChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- DATABASE TAB -->
-        <div id="database-tab" class="tab-content">
-            <div class="dashboard">
-                <div class="card">
-                    <h2>🗄️ Supabase Database Metrics</h2>
-                    <div class="metric">
-                        <span class="metric-label">Database Size</span>
-                        <span class="metric-value status-good" id="db-size">--</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">Total Tables</span>
-                        <span class="metric-value" id="db-tables">--</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">Total Records</span>
-                        <span class="metric-value" id="db-records">--</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">Growth Rate (24h)</span>
-                        <span class="metric-value status-good" id="db-growth">--</span>
-                    </div>
-                    <button class="btn btn-secondary" onclick="checkDatabase()">🔄 Refresh Stats</button>
-                </div>
-
-                <div class="card">
-                    <h2>⚡ Performance Metrics</h2>
-                    <div class="metric">
-                        <span class="metric-label">Active Connections</span>
-                        <span class="metric-value status-good" id="db-connections">--</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">Query Performance</span>
-                        <span class="metric-value status-good" id="db-query-perf">--</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">Storage Used</span>
-                        <span class="metric-value" id="db-storage-used">--</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">Backup Status</span>
-                        <span class="metric-value status-good" id="db-backup">Enabled</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <h2>📈 Database Growth History</h2>
-                <div class="time-frame-selector">
-                    <span style="font-weight: 600; color: #667eea;">Time Range:</span>
-                    <button class="time-frame-btn active" onclick="setDBTimeFrame('1hr')">1 Hour</button>
-                    <button class="time-frame-btn" onclick="setDBTimeFrame('5hr')">5 Hours</button>
-                    <button class="time-frame-btn" onclick="setDBTimeFrame('12hr')">12 Hours</button>
-                    <button class="time-frame-btn" onclick="setDBTimeFrame('24hr')">24 Hours</button>
-                    <button class="time-frame-btn" onclick="setDBTimeFrame('36hr')">36 Hours</button>
-                    <button class="time-frame-btn" onclick="setDBTimeFrame('custom')">Custom Range</button>
-                </div>
-                
-                <div class="date-picker-group" id="db-custom-date-picker" style="display: none;">
-                    <div style="flex: 1;">
-                        <label>Start Date/Time:</label>
-                        <input type="datetime-local" id="db-start-date">
-                    </div>
-                    <div style="flex: 1;">
-                        <label>End Date/Time:</label>
-                        <input type="datetime-local" id="db-end-date">
-                    </div>
-                    <button class="btn" onclick="applyDBCustomRange()">Apply</button>
-                </div>
-                
-                <div class="chart-container">
-                    <canvas id="dbChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- PC HEALTH TAB -->
-        <div id="pc-health-tab" class="tab-content">
-            <div class="dashboard">
-                <div class="card">
-                    <h2>💻 PC System Health</h2>
-                    <div class="metric">
-                        <span class="metric-label">CPU Usage</span>
-                        <span class="metric-value status-good" id="pc-cpu">--</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">Memory Usage</span>
-                        <span class="metric-value status-good" id="pc-memory">--</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">Storage Free</span>
-                        <span class="metric-value" id="pc-storage">--</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">System Temperature</span>
-                        <span class="metric-value status-good" id="pc-temp">--</span>
-                    </div>
-                    <button class="btn btn-secondary" onclick="checkPCHealth()">🔄 Refresh Health</button>
-                    <div style="margin-top: 15px; display: flex; flex-wrap: wrap; gap: 8px;">
-                        <button class="btn btn-warning btn-small" onclick="cleanTempFiles()">🗑️ Clean Temp Files</button>
-                        <button class="btn btn-warning btn-small" onclick="cleanBrowserCache()">🌐 Clear Browser Cache</button>
-                        <button class="btn btn-warning btn-small" onclick="cleanRecycleBin()">♻️ Empty Recycle Bin</button>
-                        <button class="btn btn-warning btn-small" onclick="defragDisk()">💾 Optimize Disk</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <h2>📊 System Performance History</h2>
-                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                    <div class="legend-zone good" style="flex: 1;">✅ Optimal: 0-70%</div>
-                    <div class="legend-zone warning" style="flex: 1;">⚠️ Elevated: 70-85%</div>
-                    <div class="legend-zone critical" style="flex: 1;">❌ Critical: 85-100%</div>
-                </div>
-                
-                <div class="time-frame-selector">
-                    <span style="font-weight: 600; color: #667eea;">Time Range:</span>
-                    <button class="time-frame-btn active" onclick="setPCTimeFrame('1hr')">1 Hour</button>
-                    <button class="time-frame-btn" onclick="setPCTimeFrame('5hr')">5 Hours</button>
-                    <button class="time-frame-btn" onclick="setPCTimeFrame('12hr')">12 Hours</button>
-                    <button class="time-frame-btn" onclick="setPCTimeFrame('24hr')">24 Hours</button>
-                    <button class="time-frame-btn" onclick="setPCTimeFrame('36hr')">36 Hours</button>
-                    <button class="time-frame-btn" onclick="setPCTimeFrame('custom')">Custom Range</button>
-                </div>
-                
-                <div class="date-picker-group" id="pc-custom-date-picker" style="display: none;">
-                    <div style="flex: 1;">
-                        <label>Start Date/Time:</label>
-                        <input type="datetime-local" id="pc-start-date">
-                    </div>
-                    <div style="flex: 1;">
-                        <label>End Date/Time:</label>
-                        <input type="datetime-local" id="pc-end-date">
-                    </div>
-                    <button class="btn" onclick="applyPCCustomRange()">Apply</button>
-                </div>
-                
-                <div class="chart-legend">
-                    <div class="legend-item"><div class="legend-color" style="background: #ef4444;"></div><span>CPU %</span></div>
-                    <div class="legend-item"><div class="legend-color" style="background: #f59e0b;"></div><span>Memory %</span></div>
-                    <div class="legend-item"><div class="legend-color" style="background: #8b5cf6;"></div><span>Storage %</span></div>
-                </div>
-                
-                <div class="chart-container">
-                    <canvas id="pcChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- STATUS ALERTS TAB -->
-        <div id="status-alerts-tab" class="tab-content">
-            <div class="card">
-                <h2>🚨 Realtime Status Alerts</h2>
-                <p style="color: #666; margin-bottom: 20px;">Service incidents and status updates from monitored platforms</p>
-                <div id="status-incidents">
-                    <div class="loading">Loading status alerts...</div>
-                </div>
+                <h2>🚨 Service Status</h2>
+                <div id="service-status"></div>
+                <button class="btn btn-secondary" onclick="refreshStatus()">🔄 Refresh Status</button>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Global variables
-        let networkChart, aiChart, infraChart, dbChart, pcChart;
-        let networkTimeFrame = '1hr';
-        let aiTimeFrame = '1hr';
-        let infraTimeFrame = '1hr';
-        let dbTimeFrame = '1hr';
-        let pcTimeFrame = '1hr';
+        let config = {};
         
-        // v5.6 NEW - Event markers storage
-        let networkEvents = [];
-        let aiEvents = [];
-        let infraEvents = [];
-        let dbEvents = [];
-        let pcEvents = [];
-        
-        // v5.6 NEW - Event Popup Functions
-        function showEventPopup(event) {
-            const popup = document.getElementById('eventPopup');
-            const body = document.getElementById('eventPopupBody');
-            
-            body.innerHTML = `
-                <div class="event-detail">
-                    <div class="event-detail-label">Event Type</div>
-                    <div class="event-detail-value">${event.type}</div>
-                </div>
-                <div class="event-detail">
-                    <div class="event-detail-label">Start Time</div>
-                    <div class="event-detail-value">${new Date(event.startTime).toLocaleString()}</div>
-                </div>
-                <div class="event-detail">
-                    <div class="event-detail-label">End Time</div>
-                    <div class="event-detail-value">${event.endTime ? new Date(event.endTime).toLocaleString() : 'Ongoing'}</div>
-                </div>
-                <div class="event-detail">
-                    <div class="event-detail-label">Duration</div>
-                    <div class="event-detail-value">${event.duration || 'Calculating...'}</div>
-                </div>
-                <div class="event-detail">
-                    <div class="event-detail-label">Reason</div>
-                    <div class="event-detail-value">${event.reason || 'Unknown'}</div>
-                </div>
-                <div class="event-detail">
-                    <div class="event-detail-label">Impact</div>
-                    <div class="event-detail-value">${event.impact || 'Service disruption'}</div>
-                </div>
-            `;
-            
-            popup.style.display = 'block';
+        // Load config from localStorage
+        function loadConfig() {
+            const saved = localStorage.getItem('monitoring-config');
+            if (saved) {
+                config = JSON.parse(saved);
+                return true;
+            }
+            return false;
         }
         
-        function closeEventPopup() {
-            document.getElementById('eventPopup').style.display = 'none';
-        }
-        
-        // Close popup when clicking outside
-        window.onclick = function(event) {
-            const popup = document.getElementById('eventPopup');
-            if (event.target == popup) {
-                popup.style.display = 'none';
+        // Show config modal
+        function showConfig() {
+            document.getElementById('configModal').style.display = 'flex';
+            if (config.vercelToken) {
+                document.getElementById('vercel-token').value = config.vercelToken;
+                document.getElementById('vercel-team').value = config.vercelTeam;
+                document.getElementById('github-token').value = config.githubToken;
+                document.getElementById('github-org').value = config.githubOrg;
             }
         }
         
-        // v5.6 NEW - Bold Zone Plugin with Zone Labels
-        function createBoldZonePlugin(zones, labelText) {
-            return {
-                id: 'boldZonesWithLabels',
-                beforeDraw: (chart) => {
-                    const ctx = chart.ctx;
-                    const chartArea = chart.chartArea;
-                    const yAxis = chart.scales.y;
-                    
-                    // Draw zones in reverse order so first zone appears on top when overlapping
-                    zones.forEach((zone, idx) => {
-                        // Draw BOLD colored zone background (opacity 0.75)
-                        ctx.fillStyle = zone.color;
-                        
-                        // Calculate pixel positions for this zone
-                        let top, bottom;
-                        
-                        if (idx === 0) {
-                            // First zone: from its max value to chart bottom
-                            top = yAxis.getPixelForValue(zone.max);
-                            bottom = chartArea.bottom;
-                        } else if (idx === zones.length - 1) {
-                            // Last zone: from chart top to its min value
-                            top = chartArea.top;
-                            bottom = yAxis.getPixelForValue(zone.min);
-                        } else {
-                            // Middle zones: exact boundaries
-                            top = yAxis.getPixelForValue(zone.max);
-                            bottom = yAxis.getPixelForValue(zone.min);
-                        }
-                        
-                        // Draw the zone rectangle
-                        const height = bottom - top;
-                        ctx.fillRect(chartArea.left, top, chartArea.right - chartArea.left, height);
-                        
-                        // v5.6 NEW - Add zone labels on right side of chart
-                        if (labelText && labelText[idx]) {
-                            ctx.save();
-                            ctx.fillStyle = zone.textColor || '#333';
-                            ctx.font = 'bold 11px Arial';
-                            ctx.textAlign = 'left';
-                            const labelY = top + height / 2;
-                            ctx.fillText(labelText[idx], chartArea.right + 5, labelY);
-                            ctx.restore();
-                        }
-                    });
-                }
+        // Save config
+        function saveConfig() {
+            config = {
+                vercelToken: document.getElementById('vercel-token').value,
+                vercelTeam: document.getElementById('vercel-team').value,
+                githubToken: document.getElementById('github-token').value,
+                githubOrg: document.getElementById('github-org').value
             };
+            
+            localStorage.setItem('monitoring-config', JSON.stringify(config));
+            document.getElementById('configModal').style.display = 'none';
+            
+            alert('Configuration saved! Starting real monitoring...');
+            initializeMonitoring();
         }
         
-        // v5.6 NEW - Event Markers Plugin (Clickable Red Lines)
-        function createEventMarkersPlugin(events) {
-            return {
-                id: 'eventMarkers',
-                afterDatasetsDraw: (chart) => {
-                    const ctx = chart.ctx;
-                    const chartArea = chart.chartArea;
-                    const xAxis = chart.scales.x;
-                    
-                    events.forEach(event => {
-                        // Find the x position for this event
-                        const eventIndex = chart.data.labels.findIndex(label => {
-                            return new Date(label).getTime() >= new Date(event.startTime).getTime();
-                        });
-                        
-                        if (eventIndex !== -1) {
-                            const xPos = xAxis.getPixelForValue(eventIndex);
-                            
-                            // Draw red vertical line
-                            ctx.save();
-                            ctx.strokeStyle = '#ef4444';
-                            ctx.lineWidth = 3;
-                            ctx.setLineDash([5, 3]);
-                            ctx.beginPath();
-                            ctx.moveTo(xPos, chartArea.top);
-                            ctx.lineTo(xPos, chartArea.bottom);
-                            ctx.stroke();
-                            ctx.setLineDash([]);
-                            
-                            // Draw red dot at top
-                            ctx.fillStyle = '#ef4444';
-                            ctx.beginPath();
-                            ctx.arc(xPos, chartArea.top - 5, 6, 0, Math.PI * 2);
-                            ctx.fill();
-                            
-                            ctx.restore();
-                        }
-                    });
-                },
-                afterEvent: (chart, args) => {
-                    const event = args.event;
-                    if (event.type !== 'click') return;
-                    
-                    const chartArea = chart.chartArea;
-                    const xAxis = chart.scales.x;
-                    
-                    // Check if click is near an event marker
-                    events.forEach(markerEvent => {
-                        const eventIndex = chart.data.labels.findIndex(label => {
-                            return new Date(label).getTime() >= new Date(markerEvent.startTime).getTime();
-                        });
-                        
-                        if (eventIndex !== -1) {
-                            const xPos = xAxis.getPixelForValue(eventIndex);
-                            const distance = Math.abs(event.x - xPos);
-                            
-                            // If click is within 10 pixels of marker, show popup
-                            if (distance < 10 && event.y >= chartArea.top - 10 && event.y <= chartArea.bottom) {
-                                showEventPopup(markerEvent);
-                            }
-                        }
-                    });
-                }
-            };
-        }
-        
-        // v5.6 ENHANCED - Network Chart with Bold Zones & Event Markers
-        function initNetworkChart() {
-            const ctx = document.getElementById('networkChart').getContext('2d');
-            
-            // Define BOLD zones (increased opacity to 0.75)
-            const networkZones = [
-                { min: 0, max: 50, color: 'rgba(209, 250, 229, 0.75)', textColor: '#065f46' },   // Green - Good
-                { min: 50, max: 100, color: 'rgba(254, 243, 199, 0.75)', textColor: '#92400e' }, // Tan - Fair
-                { min: 100, max: 200, color: 'rgba(254, 226, 226, 0.75)', textColor: '#991b1b' } // Pink - Poor
-            ];
-            
-            const zoneLabels = ['GOOD', 'FAIR', 'POOR'];
-            
-            networkChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Latency (ms)',
-                        data: [],
-                        borderColor: '#667eea',
-                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                        borderWidth: 3,
-                        tension: 0.4,
-                        fill: true,
-                        pointRadius: 4,
-                        pointHoverRadius: 7
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { 
-                            mode: 'index',
-                            intersect: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 200,
-                            title: { display: true, text: 'Latency (ms)' }
-                        },
-                        x: {
-                            title: { display: true, text: 'Time' }
-                        }
-                    },
-                    onClick: (event, activeElements, chart) => {
-                        // Event marker click handling is in the plugin
-                    }
-                },
-                plugins: [
-                    createBoldZonePlugin(networkZones, zoneLabels),
-                    createEventMarkersPlugin(networkEvents)
-                ]
-            });
-        }
-
-        // v5.6 ENHANCED - AI Chart with Bold Zones & Event Markers
-        function initAIChart() {
-            const ctx = document.getElementById('aiChart').getContext('2d');
-            
-            // Define BOLD zones
-            const aiZones = [
-                { min: 0, max: 500, color: 'rgba(209, 250, 229, 0.75)', textColor: '#065f46' },
-                { min: 500, max: 2000, color: 'rgba(254, 243, 199, 0.75)', textColor: '#92400e' },
-                { min: 2000, max: 5000, color: 'rgba(254, 226, 226, 0.75)', textColor: '#991b1b' }
-            ];
-            
-            const zoneLabels = ['FAST', 'MODERATE', 'SLOW'];
-            
-            aiChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [
-                        { label: 'Claude', data: [], borderColor: '#ef4444', borderWidth: 2, tension: 0.3, fill: false },
-                        { label: 'OpenAI GPT', data: [], borderColor: '#10b981', borderWidth: 2, tension: 0.3, fill: false },
-                        { label: 'Azure OpenAI', data: [], borderColor: '#3b82f6', borderWidth: 2, tension: 0.3, fill: false },
-                        { label: 'Replicate', data: [], borderColor: '#f59e0b', borderWidth: 2, tension: 0.3, fill: false },
-                        { label: 'Stability AI', data: [], borderColor: '#8b5cf6', borderWidth: 2, tension: 0.3, fill: false },
-                        { label: 'Pinecone', data: [], borderColor: '#ec4899', borderWidth: 2, tension: 0.3, fill: false },
-                        { label: 'Cohere', data: [], borderColor: '#14b8a6', borderWidth: 2, tension: 0.3, fill: false }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { mode: 'index', intersect: false }
-                    },
-                    scales: {
-                        y: { beginAtZero: true, max: 5000, title: { display: true, text: 'Response Time (ms)' } },
-                        x: { title: { display: true, text: 'Time' } }
-                    }
-                },
-                plugins: [
-                    createBoldZonePlugin(aiZones, zoneLabels),
-                    createEventMarkersPlugin(aiEvents)
-                ]
-            });
-        }
-
-        // v5.6 ENHANCED - Infrastructure Chart with Bold Zones & Event Markers
-        function initInfraChart() {
-            const ctx = document.getElementById('infraChart').getContext('2d');
-            
-            // Infrastructure uses reverse zones (higher is better)
-            const infraZones = [
-                { min: 90, max: 100, color: 'rgba(209, 250, 229, 0.75)', textColor: '#065f46' },   // 90-100% = Good
-                { min: 75, max: 90, color: 'rgba(254, 243, 199, 0.75)', textColor: '#92400e' },    // 75-90% = Fair
-                { min: 0, max: 75, color: 'rgba(254, 226, 226, 0.75)', textColor: '#991b1b' }      // 0-75% = Poor
-            ];
-            
-            const zoneLabels = ['GOOD', 'FAIR', 'POOR'];
-            
-            infraChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [
-                        { label: 'Vercel', data: [], borderColor: '#8b5cf6', borderWidth: 2, tension: 0.3, fill: false },
-                        { label: 'GitHub', data: [], borderColor: '#10b981', borderWidth: 2, tension: 0.3, fill: false },
-                        { label: 'Supabase', data: [], borderColor: '#f59e0b', borderWidth: 2, tension: 0.3, fill: false },
-                        { label: 'Stripe', data: [], borderColor: '#ef4444', borderWidth: 2, tension: 0.3, fill: false },
-                        { label: 'PayPal', data: [], borderColor: '#3b82f6', borderWidth: 2, tension: 0.3, fill: false }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { mode: 'index', intersect: false }
-                    },
-                    scales: {
-                        y: { min: 0, max: 100, title: { display: true, text: 'Health %' } },
-                        x: { title: { display: true, text: 'Time' } }
-                    }
-                },
-                plugins: [
-                    createBoldZonePlugin(infraZones, zoneLabels),
-                    createEventMarkersPlugin(infraEvents)
-                ]
-            });
-        }
-
-        // v5.6 ENHANCED - Database Chart with Bold Zones & Event Markers
-        function initDBChart() {
-            const ctx = document.getElementById('dbChart').getContext('2d');
-            
-            const dbZones = [
-                { min: 0, max: 50, color: 'rgba(209, 250, 229, 0.75)', textColor: '#065f46' },
-                { min: 50, max: 80, color: 'rgba(254, 243, 199, 0.75)', textColor: '#92400e' },
-                { min: 80, max: 100, color: 'rgba(254, 226, 226, 0.75)', textColor: '#991b1b' }
-            ];
-            
-            const zoneLabels = ['OPTIMAL', 'ELEVATED', 'CRITICAL'];
-            
-            dbChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [
-                        { label: 'DB Size (MB)', data: [], borderColor: '#667eea', borderWidth: 2, tension: 0.3, fill: false },
-                        { label: 'Active Connections', data: [], borderColor: '#10b981', borderWidth: 2, tension: 0.3, fill: false }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: true, position: 'top' },
-                        tooltip: { mode: 'index', intersect: false }
-                    },
-                    scales: {
-                        y: { beginAtZero: true, title: { display: true, text: 'Metrics' } },
-                        x: { title: { display: true, text: 'Time' } }
-                    }
-                },
-                plugins: [
-                    createBoldZonePlugin(dbZones, zoneLabels),
-                    createEventMarkersPlugin(dbEvents)
-                ]
-            });
-        }
-
-        // v5.6 ENHANCED - PC Health Chart with Bold Zones & Event Markers
-        function initPCChart() {
-            const ctx = document.getElementById('pcChart').getContext('2d');
-            
-            const pcZones = [
-                { min: 0, max: 70, color: 'rgba(209, 250, 229, 0.75)', textColor: '#065f46' },
-                { min: 70, max: 85, color: 'rgba(254, 243, 199, 0.75)', textColor: '#92400e' },
-                { min: 85, max: 100, color: 'rgba(254, 226, 226, 0.75)', textColor: '#991b1b' }
-            ];
-            
-            const zoneLabels = ['OPTIMAL', 'ELEVATED', 'CRITICAL'];
-            
-            pcChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: [],
-                    datasets: [
-                        { label: 'CPU %', data: [], borderColor: '#ef4444', borderWidth: 2, tension: 0.3, fill: false },
-                        { label: 'Memory %', data: [], borderColor: '#f59e0b', borderWidth: 2, tension: 0.3, fill: false },
-                        { label: 'Storage %', data: [], borderColor: '#8b5cf6', borderWidth: 2, tension: 0.3, fill: false }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { mode: 'index', intersect: false }
-                    },
-                    scales: {
-                        y: { min: 0, max: 100, title: { display: true, text: 'Usage %' } },
-                        x: { title: { display: true, text: 'Time' } }
-                    }
-                },
-                plugins: [
-                    createBoldZonePlugin(pcZones, zoneLabels),
-                    createEventMarkersPlugin(pcEvents)
-                ]
-            });
-        }
-
-        // Initialize all data storage
-        let networkData = {
-            timestamps: [],
-            latency: []
-        };
-        
-        let aiData = {
-            timestamps: [],
-            claude: [],
-            openai: [],
-            azure: [],
-            replicate: [],
-            stability: [],
-            pinecone: [],
-            cohere: []
-        };
-        
-        let infraData = {
-            timestamps: [],
-            vercel: [],
-            github: [],
-            supabase: [],
-            stripe: [],
-            paypal: []
-        };
-        
-        let dbData = {
-            timestamps: [],
-            size: [],
-            connections: []
-        };
-        
-        let pcData = {
-            timestamps: [],
-            cpu: [],
-            memory: [],
-            storage: []
-        };
-        
-        // Generate realistic data
-        function generateData() {
-            const now = Date.now();
-            const hoursToGenerate = 36;
-            const pointsPerHour = 12; // Data point every 5 minutes
-            
-            networkData.timestamps = [];
-            networkData.latency = [];
-            
-            for (let i = hoursToGenerate * pointsPerHour; i >= 0; i--) {
-                const timestamp = new Date(now - (i * 5 * 60 * 1000));
-                networkData.timestamps.push(timestamp.toLocaleTimeString());
-                
-                // Generate realistic latency with occasional spikes
-                const baseLatency = 25 + Math.random() * 30;
-                const spike = Math.random() > 0.95 ? Math.random() * 100 : 0;
-                networkData.latency.push(Math.round(baseLatency + spike));
-            }
-            
-            // Generate AI service data
-            aiData.timestamps = networkData.timestamps;
-            const services = ['claude', 'openai', 'azure', 'replicate', 'stability', 'pinecone', 'cohere'];
-            services.forEach(service => {
-                aiData[service] = networkData.timestamps.map(() => {
-                    const base = 300 + Math.random() * 500;
-                    const spike = Math.random() > 0.92 ? Math.random() * 2000 : 0;
-                    return Math.round(base + spike);
-                });
-            });
-            
-            // Generate infrastructure data (health percentages)
-            infraData.timestamps = networkData.timestamps;
-            const infraServices = ['vercel', 'github', 'supabase', 'stripe', 'paypal'];
-            infraServices.forEach(service => {
-                infraData[service] = networkData.timestamps.map(() => {
-                    const base = 95 + Math.random() * 5;
-                    const dip = Math.random() > 0.96 ? -Math.random() * 30 : 0;
-                    return Math.min(100, Math.max(0, Math.round(base + dip)));
-                });
-            });
-            
-            // Generate database data
-            dbData.timestamps = networkData.timestamps;
-            dbData.size = networkData.timestamps.map((_, i) => Math.round(1500 + i * 0.5 + Math.random() * 20));
-            dbData.connections = networkData.timestamps.map(() => Math.round(5 + Math.random() * 25));
-            
-            // Generate PC health data
-            pcData.timestamps = networkData.timestamps;
-            pcData.cpu = networkData.timestamps.map(() => Math.round(20 + Math.random() * 50));
-            pcData.memory = networkData.timestamps.map(() => Math.round(40 + Math.random() * 30));
-            pcData.storage = networkData.timestamps.map(() => Math.round(45 + Math.random() * 5));
-            
-            // v5.6 NEW - Generate sample events
-            generateSampleEvents();
-            
-            updateAllCharts();
-        }
-        
-        // v5.6 NEW - Generate sample events for demonstration
-        function generateSampleEvents() {
-            const now = Date.now();
-            
-            // Network outage event
-            networkEvents = [{
-                type: 'Network Outage',
-                startTime: new Date(now - 12 * 60 * 60 * 1000),
-                endTime: new Date(now - 11.5 * 60 * 60 * 1000),
-                duration: '30 minutes',
-                reason: 'ISP maintenance window',
-                impact: 'Complete network connectivity loss'
-            }];
-            
-            // AI service slowdown
-            aiEvents = [{
-                type: 'API Slowdown',
-                startTime: new Date(now - 8 * 60 * 60 * 1000),
-                endTime: new Date(now - 7 * 60 * 60 * 1000),
-                duration: '1 hour',
-                reason: 'High API traffic volume',
-                impact: 'Increased response times across all AI services'
-            }];
-            
-            // Infrastructure degradation
-            infraEvents = [{
-                type: 'Service Degradation',
-                startTime: new Date(now - 20 * 60 * 60 * 1000),
-                endTime: new Date(now - 19 * 60 * 60 * 1000),
-                duration: '1 hour',
-                reason: 'Database performance issue',
-                impact: 'Reduced infrastructure health metrics'
-            }];
-            
-            // Database connection spike
-            dbEvents = [{
-                type: 'Connection Spike',
-                startTime: new Date(now - 15 * 60 * 60 * 1000),
-                endTime: new Date(now - 14.5 * 60 * 60 * 1000),
-                duration: '30 minutes',
-                reason: 'Bulk data import operation',
-                impact: 'Temporarily elevated connection count'
-            }];
-            
-            // PC health critical
-            pcEvents = [{
-                type: 'High Resource Usage',
-                startTime: new Date(now - 6 * 60 * 60 * 1000),
-                endTime: new Date(now - 5 * 60 * 60 * 1000),
-                duration: '1 hour',
-                reason: 'Video rendering task',
-                impact: 'CPU and memory usage elevated to critical levels'
-            }];
-        }
-        
-        function updateAllCharts() {
-            updateNetworkChart();
-            updateAIChart();
-            updateInfraChart();
-            updateDBChart();
-            updatePCChart();
-        }
-        
-        function updateNetworkChart() {
-            const filteredData = filterDataByTimeFrame(networkData.timestamps, networkData.latency, networkTimeFrame);
-            networkChart.data.labels = filteredData.labels;
-            networkChart.data.datasets[0].data = filteredData.data;
-            networkChart.update();
-        }
-        
-        function updateAIChart() {
-            const filteredIndices = getFilteredIndices(aiData.timestamps, aiTimeFrame);
-            aiChart.data.labels = filteredIndices.map(i => aiData.timestamps[i]);
-            aiChart.data.datasets[0].data = filteredIndices.map(i => aiData.claude[i]);
-            aiChart.data.datasets[1].data = filteredIndices.map(i => aiData.openai[i]);
-            aiChart.data.datasets[2].data = filteredIndices.map(i => aiData.azure[i]);
-            aiChart.data.datasets[3].data = filteredIndices.map(i => aiData.replicate[i]);
-            aiChart.data.datasets[4].data = filteredIndices.map(i => aiData.stability[i]);
-            aiChart.data.datasets[5].data = filteredIndices.map(i => aiData.pinecone[i]);
-            aiChart.data.datasets[6].data = filteredIndices.map(i => aiData.cohere[i]);
-            aiChart.update();
-        }
-        
-        function updateInfraChart() {
-            const filteredIndices = getFilteredIndices(infraData.timestamps, infraTimeFrame);
-            infraChart.data.labels = filteredIndices.map(i => infraData.timestamps[i]);
-            infraChart.data.datasets[0].data = filteredIndices.map(i => infraData.vercel[i]);
-            infraChart.data.datasets[1].data = filteredIndices.map(i => infraData.github[i]);
-            infraChart.data.datasets[2].data = filteredIndices.map(i => infraData.supabase[i]);
-            infraChart.data.datasets[3].data = filteredIndices.map(i => infraData.stripe[i]);
-            infraChart.data.datasets[4].data = filteredIndices.map(i => infraData.paypal[i]);
-            infraChart.update();
-        }
-        
-        function updateDBChart() {
-            const filteredIndices = getFilteredIndices(dbData.timestamps, dbTimeFrame);
-            dbChart.data.labels = filteredIndices.map(i => dbData.timestamps[i]);
-            dbChart.data.datasets[0].data = filteredIndices.map(i => dbData.size[i]);
-            dbChart.data.datasets[1].data = filteredIndices.map(i => dbData.connections[i]);
-            dbChart.update();
-        }
-        
-        function updatePCChart() {
-            const filteredIndices = getFilteredIndices(pcData.timestamps, pcTimeFrame);
-            pcChart.data.labels = filteredIndices.map(i => pcData.timestamps[i]);
-            pcChart.data.datasets[0].data = filteredIndices.map(i => pcData.cpu[i]);
-            pcChart.data.datasets[1].data = filteredIndices.map(i => pcData.memory[i]);
-            pcChart.data.datasets[2].data = filteredIndices.map(i => pcData.storage[i]);
-            pcChart.update();
-        }
-        
-        function filterDataByTimeFrame(timestamps, data, timeFrame) {
-            const now = Date.now();
-            let cutoffTime;
-            
-            switch(timeFrame) {
-                case '1hr': cutoffTime = now - (1 * 60 * 60 * 1000); break;
-                case '5hr': cutoffTime = now - (5 * 60 * 60 * 1000); break;
-                case '12hr': cutoffTime = now - (12 * 60 * 60 * 1000); break;
-                case '24hr': cutoffTime = now - (24 * 60 * 60 * 1000); break;
-                case '36hr': cutoffTime = now - (36 * 60 * 60 * 1000); break;
-                default: cutoffTime = now - (1 * 60 * 60 * 1000);
-            }
-            
-            const filteredLabels = [];
-            const filteredData = [];
-            
-            timestamps.forEach((timestamp, i) => {
-                const time = new Date().setHours(0,0,0,0) + (i * 5 * 60 * 1000);
-                if (time >= cutoffTime) {
-                    filteredLabels.push(timestamp);
-                    filteredData.push(data[i]);
-                }
-            });
-            
-            return { labels: filteredLabels, data: filteredData };
-        }
-        
-        function getFilteredIndices(timestamps, timeFrame) {
-            const now = Date.now();
-            let cutoffTime;
-            
-            switch(timeFrame) {
-                case '1hr': cutoffTime = now - (1 * 60 * 60 * 1000); break;
-                case '5hr': cutoffTime = now - (5 * 60 * 60 * 1000); break;
-                case '12hr': cutoffTime = now - (12 * 60 * 60 * 1000); break;
-                case '24hr': cutoffTime = now - (24 * 60 * 60 * 1000); break;
-                case '36hr': cutoffTime = now - (36 * 60 * 60 * 1000); break;
-                default: cutoffTime = now - (1 * 60 * 60 * 1000);
-            }
-            
-            return timestamps.map((_, i) => i).filter((i) => {
-                const time = new Date().setHours(0,0,0,0) + (i * 5 * 60 * 1000);
-                return time >= cutoffTime;
-            });
+        // Skip config
+        function skipConfig() {
+            document.getElementById('configModal').style.display = 'none';
+            alert('Running in demo mode. Configure APIs to see real data.');
         }
         
         // Tab switching
@@ -1116,259 +294,169 @@
             const tabs = document.getElementsByClassName('tab-content');
             const buttons = document.getElementsByClassName('tab-btn');
             
-            for (let i = 0; i < tabs.length; i++) {
-                tabs[i].classList.remove('active');
-            }
-            
-            for (let i = 0; i < buttons.length; i++) {
-                buttons[i].classList.remove('active');
-            }
+            for (let tab of tabs) tab.classList.remove('active');
+            for (let btn of buttons) btn.classList.remove('active');
             
             document.getElementById(tabName + '-tab').classList.add('active');
             event.target.classList.add('active');
         }
         
-        // Time frame setters
-        function setNetworkTimeFrame(frame) {
-            networkTimeFrame = frame;
-            document.querySelectorAll('#network-tab .time-frame-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            
-            if (frame === 'custom') {
-                document.getElementById('network-custom-date-picker').style.display = 'flex';
+        // Initialize monitoring
+        async function initializeMonitoring() {
+            if (config.vercelToken) {
+                await checkVercel();
             } else {
-                document.getElementById('network-custom-date-picker').style.display = 'none';
-                updateNetworkChart();
+                document.getElementById('vercel-status').innerHTML = '<div class="alert alert-warning">Configure Vercel API to see real data</div>';
             }
-        }
-        
-        function setAITimeFrame(frame) {
-            aiTimeFrame = frame;
-            document.querySelectorAll('#ai-tab .time-frame-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
             
-            if (frame === 'custom') {
-                document.getElementById('ai-custom-date-picker').style.display = 'flex';
+            if (config.githubToken) {
+                await checkGitHub();
             } else {
-                document.getElementById('ai-custom-date-picker').style.display = 'none';
-                updateAIChart();
+                document.getElementById('github-status').innerHTML = '<div class="alert alert-warning">Configure GitHub API to see real data</div>';
             }
-        }
-        
-        function setInfraTimeFrame(frame) {
-            infraTimeFrame = frame;
-            document.querySelectorAll('#infrastructure-tab .time-frame-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
             
-            if (frame === 'custom') {
-                document.getElementById('infra-custom-date-picker').style.display = 'flex';
-            } else {
-                document.getElementById('infra-custom-date-picker').style.display = 'none';
-                updateInfraChart();
-            }
+            testNetwork();
+            refreshStatus();
         }
         
-        function setDBTimeFrame(frame) {
-            dbTimeFrame = frame;
-            document.querySelectorAll('#database-tab .time-frame-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+        // Check Vercel
+        async function checkVercel() {
+            const container = document.getElementById('vercel-status');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
             
-            if (frame === 'custom') {
-                document.getElementById('db-custom-date-picker').style.display = 'flex';
-            } else {
-                document.getElementById('db-custom-date-picker').style.display = 'none';
-                updateDBChart();
-            }
-        }
-        
-        function setPCTimeFrame(frame) {
-            pcTimeFrame = frame;
-            document.querySelectorAll('#pc-health-tab .time-frame-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            
-            if (frame === 'custom') {
-                document.getElementById('pc-custom-date-picker').style.display = 'flex';
-            } else {
-                document.getElementById('pc-custom-date-picker').style.display = 'none';
-                updatePCChart();
-            }
-        }
-        
-        // Test functions
-        function testLatency() {
-            const latency = Math.round(15 + Math.random() * 40);
-            document.getElementById('current-latency').textContent = latency + ' ms';
-            
-            if (latency < 50) {
-                document.getElementById('current-latency').className = 'metric-value status-good';
-                document.getElementById('network-health').textContent = 'Excellent';
-                document.getElementById('network-health').className = 'metric-value status-good';
-            } else if (latency < 100) {
-                document.getElementById('current-latency').className = 'metric-value status-warning';
-                document.getElementById('network-health').textContent = 'Fair';
-                document.getElementById('network-health').className = 'metric-value status-warning';
-            } else {
-                document.getElementById('current-latency').className = 'metric-value status-critical';
-                document.getElementById('network-health').textContent = 'Poor';
-                document.getElementById('network-health').className = 'metric-value status-critical';
-            }
-        }
-        
-        function simulateOutage() {
-            alert('🚨 Simulating Network Outage\n\nThis would add a new event marker to the chart.\nClick the red marker on the chart to see event details!');
-        }
-        
-        function checkDatabase() {
-            document.getElementById('db-size').textContent = '2.4 GB';
-            document.getElementById('db-tables').textContent = '47';
-            document.getElementById('db-records').textContent = '1.2M';
-            document.getElementById('db-growth').textContent = '+12%';
-            document.getElementById('db-connections').textContent = '18';
-            document.getElementById('db-query-perf').textContent = 'Excellent';
-            document.getElementById('db-storage-used').textContent = '64%';
-        }
-        
-        function checkPCHealth() {
-            document.getElementById('pc-cpu').textContent = Math.round(20 + Math.random() * 40) + '%';
-            document.getElementById('pc-memory').textContent = Math.round(40 + Math.random() * 30) + '%';
-            document.getElementById('pc-storage').textContent = Math.round(450 + Math.random() * 50) + ' GB Free';
-            document.getElementById('pc-temp').textContent = Math.round(45 + Math.random() * 15) + '°C';
-        }
-        
-        // PC Cleanup Functions
-        function cleanTempFiles() {
-            showNotification('Cleanup Started', 'Cleaning temporary files...');
-            setTimeout(() => showNotification('Cleanup Complete', 'Removed 847 MB of temporary files'), 2000);
-        }
-        
-        function cleanBrowserCache() {
-            showNotification('Cleanup Started', 'Clearing browser cache...');
-            setTimeout(() => showNotification('Cleanup Complete', 'Browser cache cleared'), 2000);
-        }
-        
-        function cleanRecycleBin() {
-            showNotification('Cleanup Started', 'Emptying recycle bin...');
-            setTimeout(() => showNotification('Cleanup Complete', 'Recycle bin emptied'), 2000);
-        }
-        
-        function defragDisk() {
-            showNotification('Optimization Started', 'Optimizing disk...');
-            setTimeout(() => showNotification('Optimization Complete', 'Disk optimized successfully'), 3000);
-        }
-        
-        // Notification helper
-        function showNotification(title, body, critical = false) {
-            // Show alert for now (browser notifications require user permission)
-            alert(`${title}\n\n${body}`);
-            
-            // Browser notification (if permission granted)
-            if ('Notification' in window && Notification.permission === 'granted') {
-                new Notification(title, { 
-                    body, 
-                    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="75" font-size="75">🎯</text></svg>',
-                    requireInteraction: critical
+            try {
+                const response = await fetch(`https://api.vercel.com/v9/projects?teamId=${config.vercelTeam}`, {
+                    headers: { 'Authorization': `Bearer ${config.vercelToken}` }
                 });
+                
+                if (!response.ok) throw new Error(`API returned ${response.status}`);
+                
+                const data = await response.json();
+                const projects = data.projects || [];
+                
+                let html = `<div class="alert alert-info">Found ${projects.length} Vercel projects</div>`;
+                container.innerHTML = html;
+                
+                updateConnectionStatus('live');
+            } catch (error) {
+                container.innerHTML = `<div class="error-message">Error: ${error.message}</div>`;
+                updateConnectionStatus('error');
             }
         }
         
-        // Check services status
-        async function checkAIServices() {
-            const services = [
-                { name: 'Claude AI (Anthropic)', status: 'online' },
-                { name: 'OpenAI GPT-4', status: 'online' },
-                { name: 'Azure OpenAI', status: 'online' },
-                { name: 'Replicate API', status: 'online' },
-                { name: 'Stability AI', status: 'online' },
-                { name: 'Pinecone Vector DB', status: 'online' },
-                { name: 'Cohere NLP', status: 'online' }
-            ];
+        // Check GitHub
+        async function checkGitHub() {
+            const container = document.getElementById('github-status');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
             
-            displayServiceList('ai-services-list', services);
+            try {
+                const response = await fetch(`https://api.github.com/orgs/${config.githubOrg}/repos`, {
+                    headers: { 
+                        'Authorization': `token ${config.githubToken}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                if (!response.ok) throw new Error(`API returned ${response.status}`);
+                
+                const repos = await response.json();
+                
+                let html = `<div class="alert alert-info">Found ${repos.length} GitHub repositories</div>`;
+                container.innerHTML = html;
+                
+                updateConnectionStatus('live');
+            } catch (error) {
+                container.innerHTML = `<div class="error-message">Error: ${error.message}</div>`;
+                updateConnectionStatus('error');
+            }
         }
         
-        async function checkInfraServices() {
-            const services = [
-                { name: 'Vercel (17 Projects)', status: 'online', uptime: '99.98%' },
-                { name: 'GitHub (22 Repos)', status: 'online', uptime: '99.95%' },
-                { name: 'Supabase Database', status: 'online', uptime: '99.92%' },
-                { name: 'Stripe Payments', status: 'online', uptime: '99.99%' },
-                { name: 'PayPal Payments', status: 'online', uptime: '99.97%' }
-            ];
+        // Test network
+        function testNetwork() {
+            const container = document.getElementById('network-info');
+            const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
             
-            displayServiceList('infra-services-list', services);
-        }
-        
-        function displayServiceList(elementId, services) {
-            const html = services.map(service => `
-                <div class="service-item ${service.status}">
-                    <div class="service-name">${service.name}</div>
-                    <div class="service-status">
-                        ${service.uptime ? `<span style="color: #666; margin-right: 10px;">${service.uptime}</span>` : ''}
-                        <span class="status-badge ${service.status}">${service.status}</span>
+            if (connection) {
+                container.innerHTML = `
+                    <div class="service-item online">
+                        <div>
+                            <div class="service-name">Connection: ${connection.effectiveType || 'Unknown'}</div>
+                            <div class="service-details">
+                                Downlink: ${connection.downlink || 'N/A'} Mbps | 
+                                RTT: ${connection.rtt || 'N/A'} ms
+                            </div>
+                        </div>
+                        <div class="status-badge online">CONNECTED</div>
                     </div>
-                </div>
-            `).join('');
-            
-            document.getElementById(elementId).innerHTML = html;
+                `;
+            } else {
+                container.innerHTML = '<div class="alert alert-warning">Network API not supported in this browser</div>';
+            }
         }
         
-        // Load status incidents
-        async function loadStatusIncidents() {
-            const incidents = [
-                {
-                    title: 'Vercel Edge Network - Resolved',
-                    time: '2 hours ago',
-                    details: 'Brief latency increase in US-EAST region. Resolved after 12 minutes.',
-                    status: 'resolved'
-                },
-                {
-                    title: 'OpenAI API Rate Limits - Monitoring',
-                    time: '5 hours ago',
-                    details: 'Increased rate limit enforcement. Operations returning to normal.',
-                    status: 'monitoring'
-                },
-                {
-                    title: 'Supabase Connection Pool - Resolved',
-                    time: '1 day ago',
-                    details: 'Temporary connection pool exhaustion. Additional capacity added.',
-                    status: 'resolved'
+        // Refresh status
+        async function refreshStatus() {
+            const container = document.getElementById('service-status');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div>Checking services...</div>';
+            
+            const services = [
+                { name: 'Vercel', url: 'https://www.vercel-status.com/api/v2/status.json' },
+                { name: 'GitHub', url: 'https://www.githubstatus.com/api/v2/status.json' },
+                { name: 'Stripe', url: 'https://status.stripe.com/api/v2/status.json' }
+            ];
+            
+            let html = '';
+            for (const service of services) {
+                try {
+                    const response = await fetch(service.url);
+                    const data = await response.json();
+                    const status = data.status.indicator === 'none' ? 'online' : 'degraded';
+                    
+                    html += `
+                        <div class="service-item ${status}">
+                            <div>
+                                <div class="service-name">${service.name}</div>
+                                <div class="service-details">${data.status.description}</div>
+                            </div>
+                            <div class="status-badge ${status}">${data.status.indicator || 'operational'}</div>
+                        </div>
+                    `;
+                } catch (error) {
+                    html += `
+                        <div class="service-item checking">
+                            <div>
+                                <div class="service-name">${service.name}</div>
+                                <div class="service-details">Unable to fetch status</div>
+                            </div>
+                            <div class="status-badge checking">UNKNOWN</div>
+                        </div>
+                    `;
                 }
-            ];
-            
-            const html = incidents.map(incident => `
-                <div class="incident-item">
-                    <div class="incident-header">
-                        <div class="incident-title">${incident.title}</div>
-                        <div class="incident-time">${incident.time}</div>
-                    </div>
-                    <div class="incident-details">${incident.details}</div>
-                </div>
-            `).join('');
-            
-            document.getElementById('status-incidents').innerHTML = html;
+            }
+            container.innerHTML = html;
         }
         
-        // Initialize everything
+        function updateConnectionStatus(status) {
+            const indicator = document.getElementById('connection-status');
+            if (status === 'live') {
+                indicator.className = 'status-indicator live';
+                indicator.textContent = '✅ Live - Monitoring Active';
+            } else if (status === 'connecting') {
+                indicator.className = 'status-indicator connecting';
+                indicator.textContent = '⚡ Connecting...';
+            } else {
+                indicator.className = 'status-indicator error';
+                indicator.textContent = '❌ Connection Error';
+            }
+        }
+        
+        // Initialize on load
         window.addEventListener('DOMContentLoaded', () => {
-            initNetworkChart();
-            initAIChart();
-            initInfraChart();
-            initDBChart();
-            initPCChart();
-            
-            generateData();
-            
-            checkAIServices();
-            checkInfraServices();
-            checkDatabase();
-            checkPCHealth();
-            loadStatusIncidents();
-            
-            // Auto-refresh every 30 seconds
-            setInterval(() => {
-                testLatency();
-                checkPCHealth();
-            }, 30000);
+            if (!loadConfig() || !config.vercelToken) {
+                showConfig();
+            } else {
+                initializeMonitoring();
+            }
         });
     </script>
 </body>
