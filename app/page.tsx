@@ -63,7 +63,7 @@ export default function OpsCenter() {
     { name: 'Social Graphics', status: 'degraded', uptime: '98.45%', requests: 8920, errors: 45, latency: 456, version: '1.1.1' },
     { name: 'Invoice Generator', status: 'healthy', uptime: '99.95%', requests: 6230, errors: 4, latency: 178, version: '1.0.3' },
     { name: 'Admin Dashboard', status: 'healthy', uptime: '100%', requests: 1240, errors: 0, latency: 67, version: '1.0.0' },
-    { name: 'CravBarrels', status: 'healthy', uptime: '99.88%', requests: 4560, errors: 6, latency: 145, version: '1.3.1' },
+    { name: 'Javari Spirits', status: 'healthy', uptime: '99.88%', requests: 4560, errors: 6, latency: 145, version: '1.3.1' },
     { name: 'CardVerse', status: 'down', uptime: '94.20%', requests: 0, errors: 156, latency: 0, version: '0.9.2' },
   ];
 
@@ -102,7 +102,7 @@ export default function OpsCenter() {
             </div>
             <div>
               <h1 className="text-2xl md:text-3xl font-bold">AI Operations Command Center</h1>
-              <p className="text-gray-400 text-sm">CRAIverse Infrastructure Monitoring</p>
+              <p className="text-gray-400 text-sm">Javariverse Infrastructure Monitoring</p>
             </div>
           </div>
         </div>
