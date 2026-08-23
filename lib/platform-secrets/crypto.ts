@@ -12,7 +12,15 @@
 //       key = PBKDF2-SHA256(`${NEXTAUTH_SECRET}:${SUPABASE_PROJECT_REF}`, salt, 100000, 32)
 //   v2: JSON{ v:2, enc:"base64", ct:base64 }   (non-secret/public values)
 // Write format: always v1 (authenticated AES-256-GCM).
-import { createCipheriv, createDecipheriv, randomBytes, pbkdf2Sync, createHash } from "crypto";
+// 2026-08-26: was `from "crypto"`. This FILE is named crypto.ts, so webpack could
+// not tell whether the bare specifier meant node's builtin or a sibling module -
+// it even suggested "./crypto". Under withSentryConfig, which traces
+// instrumentation.ts into the client bundle, that ambiguity became:
+//   Module not found: Can't resolve 'crypto'
+//
+// The node: protocol is unambiguous by definition and is the documented modern
+// form. No behaviour change on the server.
+import { createCipheriv, createDecipheriv, randomBytes, pbkdf2Sync, createHash } from "node:crypto";
 
 const ALGORITHM = "aes-256-gcm";
 const ITERATIONS = 100_000;
