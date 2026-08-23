@@ -2,6 +2,28 @@
 const nextConfig = {
   typescript: { ignoreBuildErrors: true },
   eslint: { ignoreDuringBuilds: true },
+
+  // 2026-08-26: withSentryConfig traces instrumentation.ts, which reaches
+  // lib/platform-secrets/crypto.ts and its `import ... from "crypto"`. That graph
+  // gets pulled into the CLIENT bundle, where node's crypto does not exist:
+  //
+  //   Module not found: Can't resolve 'crypto'
+  //
+  // This is a standard Next.js webpack fallback, not a Sentry option - node
+  // builtins resolve to false on the client. The server build is unaffected and
+  // still gets the real module.
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        crypto: false,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
+    return config;
+  },
 };
 // 2026-08-26: DOCUMENTED OPTIONS ONLY. My first attempt at this on the core repo
 // 500'd every page, because I invented a `webpack: {...}` key from a deprecation
