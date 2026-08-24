@@ -12,7 +12,7 @@
 //       key = PBKDF2-SHA256(`${NEXTAUTH_SECRET}:${SUPABASE_PROJECT_REF}`, salt, 100000, 32)
 //   v2: JSON{ v:2, enc:"base64", ct:base64 }   (non-secret/public values)
 // Write format: always v1 (authenticated AES-256-GCM).
-// 2026-08-26: was `from "crypto"`. This FILE is named crypto.ts, so webpack could
+// 2026-08-24: was `from "crypto"`. This FILE is named crypto.ts, so webpack could
 // not tell whether the bare specifier meant node's builtin or a sibling module -
 // it even suggested "./crypto". Under withSentryConfig, which traces
 // instrumentation.ts into the client bundle, that ambiguity became:
