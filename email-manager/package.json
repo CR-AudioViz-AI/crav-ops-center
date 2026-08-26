@@ -1,0 +1,11 @@
+{
+  "name": "javari-email-manager",
+  "version": "1.1.0",
+  "private": true,
+  "description": "Javari AI Email Manager — daily active mailbox management and morning brief",
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "googleapis": "^144.0.0",
+    "@supabase/supabase-js": "^2.45.0"
+  }
+}
