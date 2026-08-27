@@ -466,9 +466,30 @@ async function getGraphToken() {
   return (await res.json()).access_token;
 }
 
-async function gGet(token, path) {
+/**
+ * GET from Graph, retrying on throttling.
+ *
+ * Graph returns 429 under load and names the wait in Retry-After. Without this
+ * the first live run lost an entire 100-message page of an inbox to a single
+ * 429 — and lost it SILENTLY, because the throw aborted that mailbox's paging
+ * loop and the messages simply went unmentioned. A skipped page reads exactly
+ * like a finished mailbox, which is the same class of bug as the silent
+ * truncation cap. Retry, and if it still fails let it throw so it lands in the
+ * brief's error list rather than vanishing.
+ */
+async function gGet(token, path, attempt = 0) {
   const url = path.startsWith('http') ? path : `https://graph.microsoft.com/v1.0${path}`;
   const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  if (res.status === 429 || res.status === 503 || res.status === 504) {
+    if (attempt < 4) {
+      const after = Number(res.headers.get('retry-after'));
+      const waitMs = Number.isFinite(after) && after > 0
+        ? (after + 1) * 1000
+        : Math.min(2000 * 2 ** attempt, 30000);
+      await new Promise((r) => setTimeout(r, waitMs));
+      return gGet(token, path, attempt + 1);
+    }
+  }
   if (!res.ok) throw new Error(`Graph GET ${path}: ${res.status}`);
   return res.json();
 }
