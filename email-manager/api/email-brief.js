@@ -85,10 +85,16 @@ const MF = {
   junk:     'Javari-Junk-Review',
 };
 
-// How many messages one run will look at per mailbox. A run has to end
-// somewhere; the brief reports when this bites so a truncated sweep never
-// reads as a finished one.
-const PER_MAILBOX_LIMIT = 600;
+// How many messages one run will look at per mailbox.
+//
+// Raised from 600 once the run stopped downloading a full message body for
+// every message it touched. At 600, three mailboxes truncated and the backlog
+// would have taken days to clear at one bite per morning; at 2500 and again at 5000, accounts@
+// still truncated with more behind it. 15000 clears every
+// mailbox in a single pass with the whole run finishing well inside the 300s
+// maxDuration. A run still has to end somewhere, and the brief reports when
+// this bites so a truncated sweep never reads as a finished one.
+const PER_MAILBOX_LIMIT = 15000;
 
 // ── Classification ────────────────────────────────────────────────────────────
 const RX_JUNK   = /\b(casino|lottery|you have won|prize claim|million dollars|unclaimed funds|investment opportunity|click here now|act now|make money fast|double your|work from home)\b/i;
@@ -354,14 +360,22 @@ async function checkAndManageGmail({ label, tokenEnv }, dryRun) {
       for (const msg of list.data.messages || []) {
         if (fetched >= PER_MAILBOX_LIMIT) { r.truncated = true; break; }
 
-        const d = await gmail.users.messages.get({ userId: 'me', id: msg.id, format: 'full' });
+        // Metadata first, body only if needed. Classification needs two headers;
+        // only an action candidate needs a body, to look for a verification
+        // link. Fetching `format: 'full'` for every message downloaded entire
+        // message bodies — hundreds of KB each — for the ~99% that get filed on
+        // their From line alone. That was the whole cost of a run.
+        const d = await gmail.users.messages.get({
+          userId: 'me', id: msg.id, format: 'metadata', metadataHeaders: ['From', 'Subject'],
+        });
         const h = (d.data.payload && d.data.payload.headers) || [];
         const from    = (h.find((x) => x.name === 'From')    || {}).value || '';
         const subject = (h.find((x) => x.name === 'Subject') || {}).value || '(no subject)';
         const cat = classify(from, subject);
 
         if (cat === 'action') {
-          const body = gmailBodyText(d.data.payload);
+          const full = await gmail.users.messages.get({ userId: 'me', id: msg.id, format: 'full' });
+          const body = gmailBodyText(full.data.payload);
           const decision = verifyDecision(from, subject, body);
           if (decision.ok) {
             try {
