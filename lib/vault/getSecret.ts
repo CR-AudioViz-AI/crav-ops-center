@@ -8,13 +8,14 @@
 //   2. platform_secrets via get_platform_secret RPC → decrypt (v1/v2)
 //   3. process.env fallback (logs VAULT_FALLBACK_USED for migration tracking)
 import { decryptValue } from "@/lib/platform-secrets/crypto";
+import { secretKey, supabaseUrl } from "@craudioviz/platform-sdk";
 
 interface CacheEntry { value: string | null; at: number; }
 const CACHE = new Map<string, CacheEntry>();
 const TTL_MS = 5 * 60 * 1000;
 
-const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-const SB_SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+const SB_URL = supabaseUrl();
+const SB_SERVICE = secretKey();
 
 async function fetchFromVault(key: string): Promise<string | null> {
   if (!SB_URL || !SB_SERVICE) return null;

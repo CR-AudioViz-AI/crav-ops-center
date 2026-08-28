@@ -1,3 +1,4 @@
+import { secretKey, supabaseUrl } from "@craudioviz/platform-sdk";
 // lib/analytics/track.ts — log every visit, human or machine
 //
 // analytics_events and analytics_sessions were designed and left empty: schema
@@ -108,8 +109,8 @@ export async function hashIp(ip: string | null): Promise<string | null> {
  * write to serve a page.
  */
 export async function track(v: Visit): Promise<void> {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = supabaseUrl();
+  const key = secretKey();
   if (!url || !key) return;
 
   const bot = classifyBot(v.userAgent);

@@ -21,6 +21,7 @@
 // The node: protocol is unambiguous by definition and is the documented modern
 // form. No behaviour change on the server.
 import { createCipheriv, createDecipheriv, randomBytes, pbkdf2Sync, createHash } from "node:crypto";
+import { supabaseUrl } from "@craudioviz/platform-sdk";
 
 const ALGORITHM = "aes-256-gcm";
 const ITERATIONS = 100_000;
@@ -39,7 +40,7 @@ export interface EncryptedEnvelope {
 function keyMaterial(): string {
   const nas = process.env.NEXTAUTH_SECRET;
   const ref = process.env.SUPABASE_PROJECT_REF
-    ?? (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace("https://", "").split(".")[0];
+    ?? (supabaseUrl()).replace("https://", "").split(".")[0];
   if (!nas) throw new Error("NEXTAUTH_SECRET is required for vault key derivation");
   if (!ref) throw new Error("SUPABASE_PROJECT_REF (or NEXT_PUBLIC_SUPABASE_URL) is required for vault key derivation");
   return `${nas}:${ref}`;

@@ -4,9 +4,10 @@
 // set_platform_secret RPC. 2026-07-13
 import { encryptValue, fingerprint } from "@/lib/platform-secrets/crypto";
 import { cacheInvalidate } from "@/lib/vault/getSecret";
+import { secretKey, supabaseUrl } from "@craudioviz/platform-sdk";
 
-const SB_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-const SB_SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+const SB_URL = supabaseUrl();
+const SB_SERVICE = secretKey();
 
 export interface SetSecretOptions {
   category?: string;
