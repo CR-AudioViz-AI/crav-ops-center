@@ -113,6 +113,21 @@
 
 const { google } = require('googleapis');
 const { createClient } = require('@supabase/supabase-js');
+const { triage, RX: TRX } = require('../lib/triage.js');
+const TS = require('../lib/thread-state.js');
+
+// Bucket names from lib/triage.js are about STATE. The result keys and labels
+// below are what already exists in fourteen live mailboxes. Mapping between
+// them here, in one place, is what lets the engine be rewritten without
+// migrating a single mailbox.
+const BUCKET_TO_KEY = {
+  waiting: 'action',       // Javari/Action-Required — the only bucket that costs attention
+  opportunity: 'invite',   // Javari/Affiliate-Invites — batched, never interrupts
+  record: 'notif',         // Javari/Notifications — happened, finished, keep it
+  broadcast: 'broadcast',  // Javari/Broadcast — sent to a list, bulk-deletable
+  junk: 'junk',
+  unsorted: 'unsorted',
+};
 
 const BRIEF_FROM = 'craudiovizai@gmail.com';
 const BRIEF_TO   = 'royhenders@gmail.com';
@@ -128,6 +143,7 @@ const GL = {
   junk:     'Javari/Junk-Review',
   declined: 'Javari/Declined',
   invite:   'Javari/Affiliate-Invites',
+  broadcast: 'Javari/Broadcast',
   unsorted: 'Javari/Unsorted',
 };
 
@@ -137,6 +153,7 @@ const MF = {
   junk:     'Javari-Junk-Review',
   declined: 'Javari-Declined',
   invite:   'Javari-Affiliate-Invites',
+  broadcast: 'Javari-Broadcast',
 };
 
 // How many messages one run will look at per mailbox.
@@ -150,174 +167,42 @@ const MF = {
 // this bites so a truncated sweep never reads as a finished one.
 const PER_MAILBOX_LIMIT = 15000;
 
-// ── Classification ────────────────────────────────────────────────────────────
+// The hand-built sender map is now a SEED, not a system. Its 242 addresses were
+// real decisions backed by evidence and throwing them away would be waste — but
+// nothing depends on it. Delete the file and the run still works: thread state
+// and List-Unsubscribe decide most mail without it, and the reputation store
+// learns the rest from Roy's own behaviour.
 //
-// 2026-08-27, after the first live morning run. It reported "0 action items
-// need your decisions" while three affiliate APPROVALS, two declines and two
-// human outreach emails sat in the unsorted pile. Under-flagging is worse than
-// over-flagging here: Roy reads "0 actions" and trusts it, and revenue signal
-// gets treated as noise. These patterns are widened deliberately.
+// Its old bucket names are translated to state names here, in one place.
+const SEED_BUCKET = { action: 'waiting', notif: 'record', invite: 'opportunity' };
 
-const RX_JUNK = /\b(casino|lottery|you have won|prize claim|million dollars|unclaimed funds|investment opportunity|click here now|act now|make money fast|double your|work from home)\b/i;
-
-// A payment that failed is ALWAYS an action, and must be tested before the
-// partnership-decline rule below — otherwise "your payment was declined" gets
-// filed away as a record and the card stays broken.
-//
-// 2026-08-27: the gap between the two halves was `[^.]{0,60}` — no period
-// allowed. That is wrong in the exact case this rule exists for, because the
-// text between "payment" and "unsuccessful" is nearly always a company name or
-// an amount, and both contain periods:
-//
-//     "$465.56 payment to Base44, Inc. was unsuccessful again"
-//                              ^^^^  ^
-//
-// Two periods, no match, and a failed charge to Base44 sat unsorted. The class
-// is now [^\n] — still bounded, so it cannot run away across a long body, but
-// it no longer treats a decimal point as the end of the sentence.
-const RX_PAYMENT_TROUBLE = /\b(payment|card|charge|transaction|billing|invoice|subscription|autopay)\b[^\n]{0,60}\b(declined|failed|denied|unsuccessful|could not be processed)\b|\b(declined|failed)\b[^\n]{0,40}\b(payment|card|charge)\b/i;
-
-// An affiliate/partnership rejection. A record, not a decision — Roy asked for
-// these to go to a searchable Declined folder rather than his action list.
-const RX_DECLINED = /\b(declined|not approved|was rejected|unable to approve|did not meet|not be moving forward|unsuccessful application)\b/i;
-const RX_DECLINE_CONTEXT = /\b(application|apply|partnership|affiliate|program|request|publisher|partner)\b/i;
-
-// Things that genuinely need Roy. Affiliate APPROVALS are actions — each one is
-// a merchant to add to the catalogue.
-const RX_ACTION = /\b(please respond|urgent|action required|response needed|deadline|asap|review needed|approval needed|please sign|payment due|overdue|past due|final notice)\b|\bwelcome to (the )?[\s\S]{0,40}?(affiliate|partner|publisher) program\b|\b(has been|was) approved\b|\byou('| a)?re (now )?approved\b|\baccepted your (application|proposal|terms)\b/i;
-
-// Automated senders. Widened from the first run, where these all fell through
-// to unsorted and accounted for most of the 1,042-message pile: CJ's merchant
-// blasts come from owner-membermessaging@, PayPal's notices from service@, and
-// the marketing streams from em./e./marketing./informational. subdomains.
-const RX_NOTIF = new RegExp([
-  'no.?reply', 'noreply', 'do.not.reply', 'notifications?@', 'alerts?@',
-  'mailer@', 'mailer-daemon', 'automated@', 'system@', 'postmaster', 'bounce@',
-  'updates?@', 'news@', 'newsletter', 'marketing@', 'informational@',
-  'owner-membermessaging@',          // CJ Affiliate merchant blasts
-  'membermessaging@', '@mx\\d+\\.cj\\.com',
-  'service@paypal\\.com',            // PayPal transaction notices
-  'shipment-tracking@', 'auto-confirm@', 'orders@',
-  'pinmail@', 'invoices\\+', 'billing@stripe',
-  '@e[m]?\\.[a-z0-9-]+\\.com',       // em.linkedin.com, e.purina.com
-  '@marketing\\.', '@email\\.', '@mail\\.', '@notifications\\.',
-  '@user\\.[a-z0-9-]+\\.com',        // team@user.hostinger.com
-  '@substack\\.com',
-  '@amazonses', '@sendgrid', '@mailchimp', '@sparkpostmail', '@mandrillapp',
-].join('|'), 'i');
-
-// Phrases that make something an action NO MATTER WHO SENT IT. Checked before
-// the automated-sender rule, because the systems that chase money are exactly
-// the ones that look automated. Without this, widening RX_NOTIF would have
-// filed the Personal Touch overdue invoices away silently — they arrive from
-// quickbooks@notification.intuit.com.
-const RX_ALWAYS_ACTION = /\b(overdue|past due|final notice|final demand|suspended|account (is )?locked|payment due|amount due|failed payment|payment failed|expires? (today|tomorrow)|(final|last) chance to renew)\b/i;
-
-// The manager's own daily digest. Files itself rather than reappearing in the
-// unsorted list every morning for the rest of time.
-const RX_SELF = /craudiovizai@gmail\.com/i;
-
-// ── The sender map ────────────────────────────────────────────────────────────
-//
-// 2026-08-27. 800 messages were sitting unsorted across 14 mailboxes, and
-// reading them made the reason obvious: a keyword rule cannot read a sender.
-//
-//     "PersonalHour has invited you to join their program"
-//     "Bloomkin Glow"                     (the same failure in the catalogue)
-//
-// There is no noun in either one for a regex to match. Sixty-six merchants had
-// invited CR AudioViz into their AWIN programmes and every single invitation
-// was filed as "could not classify". The fix is not a longer regex. It is
-// knowing who sent it.
-//
-// sender-map.json holds one decision per address, each with the evidence that
-// justified it, built by reading that sender's actual subject lines. A sender
-// whose subjects pointed in more than one direction is deliberately ABSENT, and
-// absent still means unsorted — the "never guess" rule is unchanged, the map
-// just makes far fewer things guesses.
-const SENDER_MAP = (() => {
+function seedReputation() {
+  const m = new Map();
   try {
     const raw = require('../lib/sender-map.json');
-    const m = new Map();
-    for (const e of raw.senders) m.set(e.address.toLowerCase(), e.bucket);
-    return m;
-  } catch (err) {
-    // A missing or malformed map must not take the run down. Without it every
-    // message simply falls through to the regexes exactly as it did before.
-    console.error('[email-brief] sender map unavailable:', err.message);
-    return new Map();
-  }
-})();
-
-// Pull the bare address out of "Display Name <addr@host>", or accept a bare one.
-function addressOf(from) {
-  const m = /<([^>]+)>/.exec(from || '');
-  return (m ? m[1] : String(from || '')).trim().toLowerCase();
-}
-
-// An affiliate or partner network saying a merchant wants us. Roy's call, made
-// 2026-08-27: these get their own label rather than Action-Required, because 66
-// invitations would have buried the 9 real decisions — and rather than
-// Notifications, because an inbound merchant offer is not a receipt. The brief
-// names every merchant, so filing them out of the inbox loses nothing.
-const RX_INVITE = /\b(has invited you to join|invited you to (their|our) (program|programme)|invitation to (join|partner)|collaboration invitation|let'?s (explore a )?partner)\b/i;
-
-// A reply in a thread WE started. A vendor answering our own ticket is the one
-// category where quietly filing it away costs real money: "Re: Billed twice for
-// a total over $900" is not a notification.
-//
-// Deliberately narrow. It requires a reply marker or an explicit ticket
-// reference — "Re: How is your first week with Bolt.new?" is onboarding drip
-// dressed as a reply, which is why the sender map decides first and this rule
-// only ever gets to see senders the map did not name.
-const RX_THREAD = /^\s*(re|fwd?|aw|antwort)\s*:/i;
-const RX_TICKET = /\b(ticket|case|incident|request)\s*#?\s*(id\s*:?\s*)?[:#]?\s*\d{4,}|\bINC-[A-Z0-9]+|\[#\d{4,}\]/i;
-
-/**
- * Bucket one message.
- *
- * Order matters and is not arbitrary:
- *   junk           — obvious fraud, quarantined never deleted
- *   payment trouble— a failed charge is an action even though it says "declined"
- *   declined       — partnership rejections: a record, filed for search
- *   self           — this tool's own digest
- *   sender map     — an address we have read and decided about, with evidence
- *   invite         — a merchant asking to be sold: own label, named in the brief
- *   thread reply   — a vendor answering a ticket we opened
- *   notif          — automated sender; cannot raise an action however urgent
- *                    its marketing copy sounds
- *   action         — needs a human decision
- *   unsorted       — LEFT IN THE INBOX. Never guess.
- *
- * The map sits AFTER the money and rejection rules and BEFORE the sender
- * regexes. That ordering is the whole design: a sender we have read about beats
- * a pattern that merely matches its address, but nothing beats a failed payment.
- * Money first, evidence second, patterns last.
- */
-function classify(from, subject) {
-  const t = `${from} ${subject}`;
-  if (RX_JUNK.test(t)) return 'junk';
-  if (RX_PAYMENT_TROUBLE.test(t)) return 'action';
-  if (RX_DECLINED.test(subject) && RX_DECLINE_CONTEXT.test(t)) return 'declined';
-  if (RX_ALWAYS_ACTION.test(subject)) return 'action';
-  if (RX_SELF.test(from)) return 'notif';
-
-  const mapped = SENDER_MAP.get(addressOf(from));
-  if (mapped) {
-    // One exception to the map: a sender we filed as ordinary vendor mail can
-    // still send a genuine reply to a ticket we opened. Akool is both a
-    // marketing list and the counterparty on a $252 refund.
-    if (mapped === 'notif' && (RX_THREAD.test(subject) || RX_TICKET.test(subject))) {
-      return 'action';
+    for (const e of raw.senders) {
+      const b = SEED_BUCKET[e.bucket];
+      if (b) m.set(e.address.toLowerCase(), b);
     }
-    return mapped;
+  } catch (err) {
+    // Missing seed is not fatal. It never was load-bearing.
+    console.error('[email-brief] seed map unavailable:', err.message);
   }
-
-  if (RX_INVITE.test(subject)) return 'invite';
-  if (RX_NOTIF.test(from)) return 'notif';
-  if (RX_ACTION.test(t)) return 'action';
-  return 'unsorted';
+  return m;
 }
+
+// classify() lived here. It is gone — lib/triage.js replaced it, and leaving a
+// second decision path in the file is how two classifiers drift apart and
+// nobody can say which one filed a message.
+//
+// What moved, and where it went:
+//   RX_JUNK, RX_PAYMENT_TROUBLE, RX_DECLINED, RX_ALWAYS_ACTION, RX_SELF
+//     -> lib/triage.js, with the suffix bug fixed in all of them
+//   RX_NOTIF (the sender-pattern list)
+//     -> deleted. List-Unsubscribe and Auto-Submitted do the same job from the
+//        message's own headers, for senders nobody has ever catalogued.
+//   RX_THREAD / RX_TICKET (guessing at replies from the subject line)
+//     -> deleted. Real thread state answers it; see lib/thread-state.js.
 
 // ── Automatic verification ────────────────────────────────────────────────────
 //
@@ -518,11 +403,12 @@ function gmailBodyText(payload) {
   return chunks.join('\n').slice(0, 200000);
 }
 
-async function checkAndManageGmail({ label, tokenEnv }, dryRun) {
+async function checkAndManageGmail({ label, tokenEnv }, dryRun, reputation = new Map()) {
   const r = {
-    account: label, action: [], notif: [], junk: [], declined: [], invite: [], unsorted: [],
-    drafts: [], verified: [], errors: [], filed: 0, quarantined: 0, labeled_action: 0,
-    declined_filed: 0, invites_filed: 0, truncated: false,
+    account: label, action: [], notif: [], junk: [], declined: [], invite: [],
+    broadcast: [], unsorted: [], drafts: [], verified: [], errors: [], filed: 0,
+    quarantined: 0, labeled_action: 0, declined_filed: 0, invites_filed: 0,
+    broadcast_filed: 0, truncated: false,
   };
   const token = process.env[tokenEnv];
   if (!token) { r.errors.push(`${tokenEnv} not set`); return r; }
@@ -542,6 +428,7 @@ async function checkAndManageGmail({ label, tokenEnv }, dryRun) {
         labelIds.action = byName(GL.action); labelIds.notif = byName(GL.notif);
         labelIds.junk = byName(GL.junk); labelIds.unsorted = byName(GL.unsorted);
         labelIds.declined = byName(GL.declined); labelIds.invite = byName(GL.invite);
+        labelIds.broadcast = byName(GL.broadcast);
         throw { __skip: true };
       }
       labelIds.action   = await ensureGmailLabel(gmail, GL.action);
@@ -549,10 +436,27 @@ async function checkAndManageGmail({ label, tokenEnv }, dryRun) {
       labelIds.junk     = await ensureGmailLabel(gmail, GL.junk);
       labelIds.declined = await ensureGmailLabel(gmail, GL.declined);
       labelIds.invite   = await ensureGmailLabel(gmail, GL.invite);
+      labelIds.broadcast = await ensureGmailLabel(gmail, GL.broadcast);
       labelIds.unsorted = await ensureGmailLabel(gmail, GL.unsorted);
     } catch (e) { if (!e.__skip) r.errors.push(`Label setup: ${e.message}`); }
 
-    const buckets = { action: [], notif: [], junk: [], declined: [], invite: [], unsorted: [] };
+    const buckets = { action: [], notif: [], junk: [], declined: [], invite: [],
+                      broadcast: [], unsorted: [] };
+
+    // Read Sent ONCE, before the sweep. Everything downstream answers "are we
+    // in this conversation" with a map lookup instead of a network call — the
+    // difference between a run that finishes and one that does not.
+    let sentThreads = new Map();
+    try {
+      sentThreads = await TS.gmailSentThreads(gmail);
+    } catch (e) {
+      // Losing this degrades accuracy, not correctness: without it nothing is
+      // ever seen as a thread we are in, so conversations fall through to the
+      // other rules rather than being mislabelled.
+      r.errors.push(`sent scan: ${e.message}`);
+    }
+    const threadCache = new Map();
+
     let pageToken;
     let fetched = 0;
 
@@ -573,12 +477,41 @@ async function checkAndManageGmail({ label, tokenEnv }, dryRun) {
         // message bodies — hundreds of KB each — for the ~99% that get filed on
         // their From line alone. That was the whole cost of a run.
         const d = await gmail.users.messages.get({
-          userId: 'me', id: msg.id, format: 'metadata', metadataHeaders: ['From', 'Subject'],
+          userId: 'me', id: msg.id, format: 'metadata',
+          metadataHeaders: ['From', 'Subject', 'List-Unsubscribe',
+                            'Auto-Submitted', 'Precedence'],
         });
-        const h = (d.data.payload && d.data.payload.headers) || [];
-        const from    = (h.find((x) => x.name === 'From')    || {}).value || '';
-        const subject = (h.find((x) => x.name === 'Subject') || {}).value || '(no subject)';
-        const cat = classify(from, subject);
+        const payload = d.data.payload;
+        const from    = TS.gmailHeader(payload, 'From') || '';
+        const subject = TS.gmailHeader(payload, 'Subject') || '(no subject)';
+
+        // Thread state, but only paid for where it can matter: a thread we
+        // never sent into needs no fetch, and that is the overwhelming
+        // majority of any inbox.
+        let thread = { weSent: false, newestIsInbound: true, closed: false };
+        const tid = msg.threadId || d.data.threadId;
+        if (tid && sentThreads.has(tid)) {
+          if (threadCache.has(tid)) {
+            thread = threadCache.get(tid);
+          } else {
+            try {
+              thread = await TS.gmailThreadDetail(gmail, tid, TRX.RX_CLOSED);
+            } catch (e) {
+              r.errors.push(`thread ${tid}: ${e.message}`);
+            }
+            threadCache.set(tid, thread);
+          }
+        }
+
+        const verdict = triage({
+          from, subject,
+          date: d.data.internalDate
+            ? new Date(Number(d.data.internalDate)).toISOString() : null,
+          listUnsubscribe: TS.gmailHeader(payload, 'List-Unsubscribe'),
+          autoSubmitted:   TS.gmailHeader(payload, 'Auto-Submitted'),
+          precedence:      TS.gmailHeader(payload, 'Precedence'),
+        }, thread, reputation);
+        const cat = BUCKET_TO_KEY[verdict.bucket] || 'unsorted';
 
         if (cat === 'action') {
           const full = await gmail.users.messages.get({ userId: 'me', id: msg.id, format: 'full' });
@@ -606,7 +539,7 @@ async function checkAndManageGmail({ label, tokenEnv }, dryRun) {
           }
         }
 
-        r[cat].push({ from, subject });
+        r[cat].push({ from, subject, why: verdict.reason, source: verdict.source });
         buckets[cat].push(msg.id);
         fetched++;
       }
@@ -646,6 +579,13 @@ async function checkAndManageGmail({ label, tokenEnv }, dryRun) {
       // the brief names every merchant that invited us, every morning.
       if (!dryRun) await batchModify(gmail, buckets.invite, [labelIds.invite], ['INBOX']);
       r.invites_filed = buckets.invite.length;
+    }
+    if (buckets.broadcast.length && (labelIds.broadcast || dryRun)) {
+      // Separate from Notifications on purpose. A receipt is worth searching
+      // later; a newsletter is worth deleting a thousand at a time. Filing
+      // both into one label makes neither possible.
+      if (!dryRun) await batchModify(gmail, buckets.broadcast, [labelIds.broadcast], ['INBOX']);
+      r.broadcast_filed = buckets.broadcast.length;
     }
     if (buckets.unsorted.length && labelIds.unsorted && !dryRun) {
       // Tagged, NOT moved. It stays in the inbox where Roy will see it.
@@ -766,7 +706,7 @@ async function ensureM365Folder(token, userId, displayName) {
   return created.id;
 }
 
-async function checkAndManageM365(token, dryRun) {
+async function checkAndManageM365(token, dryRun, reputation = new Map()) {
   let users = [];
   try {
     const data = await gGet(token, '/users?$select=id,mail,userPrincipalName,displayName&$top=100');
@@ -775,9 +715,9 @@ async function checkAndManageM365(token, dryRun) {
   } catch (err) {
     return [{
       account: '@craudiovizai.com (discovery failed)', action: [], notif: [], junk: [],
-      declined: [], invite: [], unsorted: [], drafts: [], verified: [], errors: [err.message],
-      filed: 0, quarantined: 0, labeled_action: 0, declined_filed: 0, invites_filed: 0,
-      truncated: false,
+      declined: [], invite: [], broadcast: [], unsorted: [], drafts: [], verified: [],
+      errors: [err.message], filed: 0, quarantined: 0, labeled_action: 0,
+      declined_filed: 0, invites_filed: 0, broadcast_filed: 0, truncated: false,
     }];
   }
 
@@ -787,9 +727,10 @@ async function checkAndManageM365(token, dryRun) {
   for (const user of users) {
     const addr = user.mail || user.userPrincipalName;
     const r = {
-      account: addr, action: [], notif: [], junk: [], declined: [], invite: [], unsorted: [],
-      drafts: [], verified: [], errors: [], filed: 0, quarantined: 0, labeled_action: 0,
-      declined_filed: 0, invites_filed: 0, truncated: false,
+      account: addr, action: [], notif: [], junk: [], declined: [], invite: [],
+      broadcast: [], unsorted: [], drafts: [], verified: [], errors: [], filed: 0,
+      quarantined: 0, labeled_action: 0, declined_filed: 0, invites_filed: 0,
+      broadcast_filed: 0, truncated: false,
     };
 
     try {
@@ -801,21 +742,86 @@ async function checkAndManageM365(token, dryRun) {
         folderIds.junk   = await ensureM365Folder(token, user.id, MF.junk);
         folderIds.declined = await ensureM365Folder(token, user.id, MF.declined);
         folderIds.invite   = await ensureM365Folder(token, user.id, MF.invite);
+        folderIds.broadcast = await ensureM365Folder(token, user.id, MF.broadcast);
       } catch (e) { if (!e.__skip) r.errors.push(`Folder setup: ${e.message}`); }
 
       // No isRead filter — the whole inbox. Handled mail leaves the inbox, so
       // this stays idempotent without one.
-      let nextLink = `/users/${user.id}/mailFolders/inbox/messages?$select=id,from,subject,bodyPreview&$top=100`;
+      // Read Sent ONCE. Graph makes this cheaper than Gmail does: conversationId
+      // and sentDateTime both come back on the list response, so the whole map
+      // is built from paged reads with no per-message fetch at all.
+      // gGet's real signature is (token, path). thread-state.js wants a plain
+      // one-argument getter so it stays testable without a token, so bind it
+      // here rather than leaking the token into that module.
+      const get = (path) => gGet(token, path);
+
+      let sentConv = new Map();
+      try {
+        sentConv = await TS.graphSentConversations(get, user.id);
+      } catch (e) {
+        r.errors.push(`sent scan: ${e.message}`);
+      }
+
+      // Getting List-Unsubscribe out of Graph, correctly.
+      //
+      // The obvious approach — $select=internetMessageHeaders — does not work
+      // on a message COLLECTION. Graph only returns that property on a single
+      // message GET, so using it would mean one HTTP call per message and a
+      // sweep that never finishes. The first version of this tried exactly
+      // that and every mailbox reported "headers unavailable".
+      //
+      // The supported route is the MAPI named property behind the header.
+      // PS_INTERNET_HEADERS is {00020386-0000-0000-C000-000000000046}, and any
+      // RFC 822 header hangs off it by name. Expanded on the collection, it
+      // costs nothing extra per message.
+      // The filter value must be percent-encoded. It contains braces, spaces and
+      // single quotes, all legal in a URL only when escaped — the unencoded
+      // version returned 400 on every mailbox.
+      const IH = '{00020386-0000-0000-C000-000000000046}';
+      const prop = (name) => `String ${IH} Name ${name}`;
+      const expandFilter = ['List-Unsubscribe', 'Auto-Submitted', 'Precedence']
+        .map((n) => `id eq '${prop(n)}'`).join(' or ');
+      const EXPAND = 'singleValueExtendedProperties($filter='
+        + encodeURIComponent(expandFilter) + ')';
+      const SEL = 'id,from,subject,bodyPreview,conversationId,receivedDateTime';
+
+      // Build the probe from the same parts rather than appending a second
+      // $top to the real query — a duplicated query parameter is itself a 400,
+      // and it masked the encoding bug underneath it.
+      const buildQuery = (top, withExpand) =>
+        `$select=${SEL}` + (withExpand ? `&$expand=${EXPAND}` : '') + `&$top=${top}`;
+
+      // If the tenant refuses the expand, drop it and keep going: losing it
+      // costs accuracy on unknown senders, not correctness.
+      let useExpand = true;
+      try {
+        await get(`/users/${user.id}/mailFolders/inbox/messages?${buildQuery(1, true)}`);
+      } catch (e) {
+        useExpand = false;
+        r.errors.push(`bulk headers unavailable (${e.message}) — detection reduced`);
+      }
+
+      let nextLink = `/users/${user.id}/mailFolders/inbox/messages?${buildQuery(100, useExpand)}`;
       let fetched = 0;
-      const ids = { action: [], notif: [], junk: [], declined: [], invite: [] };
+      const ids = { action: [], notif: [], junk: [], declined: [], invite: [],
+                    broadcast: [] };
 
       while (nextLink && fetched < PER_MAILBOX_LIMIT) {
-        const inbox = await gGet(token, nextLink);
+        const inbox = await get(nextLink);
         for (const msg of inbox.value || []) {
           if (fetched >= PER_MAILBOX_LIMIT) { r.truncated = true; break; }
           const from    = (msg.from && msg.from.emailAddress && msg.from.emailAddress.address) || '';
           const subject = msg.subject || '(no subject)';
-          const cat = classify(from, subject);
+
+          const thread = TS.graphThreadState(msg, sentConv, TRX.RX_CLOSED);
+          const verdict = triage({
+            from, subject,
+            date: msg.receivedDateTime || null,
+            listUnsubscribe: TS.graphHeader(msg, 'List-Unsubscribe'),
+            autoSubmitted:   TS.graphHeader(msg, 'Auto-Submitted'),
+            precedence:      TS.graphHeader(msg, 'Precedence'),
+          }, thread, reputation);
+          const cat = BUCKET_TO_KEY[verdict.bucket] || 'unsorted';
 
           if (cat === 'action') {
             const decision = verifyDecision(from, subject, msg.bodyPreview || '');
@@ -836,7 +842,7 @@ async function checkAndManageM365(token, dryRun) {
             }
           }
 
-          r[cat].push({ from, subject });
+          r[cat].push({ from, subject, why: verdict.reason, source: verdict.source });
           if (cat !== 'unsorted') ids[cat].push(msg.id);
           fetched++;
         }
@@ -852,6 +858,7 @@ async function checkAndManageM365(token, dryRun) {
         r.labeled_action = ids.action.length;
         r.declined_filed = ids.declined.length;
         r.invites_filed = ids.invite.length;
+        r.broadcast_filed = ids.broadcast.length;
       } else {
         if (folderIds.notif && ids.notif.length) {
           const out = await graphMoveBatch(token, user.id, ids.notif, folderIds.notif);
@@ -872,6 +879,10 @@ async function checkAndManageM365(token, dryRun) {
         if (folderIds.invite && ids.invite.length) {
           const out = await graphMoveBatch(token, user.id, ids.invite, folderIds.invite);
           r.invites_filed = out.moved; out.errors.slice(0, 3).forEach((e) => r.errors.push(`invite ${e}`));
+        }
+        if (folderIds.broadcast && ids.broadcast.length) {
+          const out = await graphMoveBatch(token, user.id, ids.broadcast, folderIds.broadcast);
+          r.broadcast_filed = out.moved; out.errors.slice(0, 3).forEach((e) => r.errors.push(`broadcast ${e}`));
         }
       }
       // Unsorted is deliberately not moved.
@@ -920,7 +931,7 @@ async function deliverBrief(all, dryRun) {
 
   let tAction = 0, tNotif = 0, tJunk = 0, tDraft = 0, tErr = 0;
   let tFiled = 0, tQuar = 0, tUnsorted = 0, tVerified = 0, tTrunc = 0, tDeclined = 0;
-  let tInvite = 0;
+  let tInvite = 0, tBroadcast = 0;
   const lines = [`JAVARI EMAIL MANAGER — ${etDate}`, '='.repeat(64), ''];
 
   for (const r of all) {
@@ -929,14 +940,15 @@ async function deliverBrief(all, dryRun) {
     const v = (r.verified || []).length;
     const dec = (r.declined || []).length;
     const inv = (r.invite || []).length;
-    tDeclined += dec; tInvite += inv;
+    const bc  = (r.broadcast || []).length;
+    tDeclined += dec; tInvite += inv; tBroadcast += bc;
     tAction += a; tNotif += n; tJunk += j; tDraft += d; tErr += e;
     tUnsorted += u; tVerified += v;
     tFiled += (r.filed || 0); tQuar += (r.quarantined || 0);
     if (r.truncated) tTrunc++;
 
     lines.push(`📬 ${r.account}`);
-    lines.push(`   Javari filed: ${r.filed || 0} notifications | ${r.quarantined || 0} junk quarantined | ${dec} declines filed | ${a} actions need YOU`);
+    lines.push(`   Javari filed: ${r.filed || 0} records | ${bc} broadcast | ${dec} declines | ${r.quarantined || 0} junk | ${a} need YOU`);
     if (inv > 0) lines.push(`   ${inv} affiliate invitation${inv !== 1 ? 's' : ''} filed to ${GL.invite} — every merchant is named below`);
     if (u > 0) lines.push(`   ${u} left in your inbox — Javari could not classify ${u !== 1 ? 'them' : 'it'} and did not move ${u !== 1 ? 'them' : 'it'}`);
 
@@ -953,6 +965,7 @@ async function deliverBrief(all, dryRun) {
         lines.push(`    ${i + 1}. ${m.subject}`);
         lines.push(`       From: ${m.from}`);
         if (m.note) lines.push(`       ⚠ ${m.note}`);
+        if (m.why)  lines.push(`       why: ${m.why}`);
         lines.push(`       → ${suggestFollowUp(m.from, m.subject)}`);
       });
     }
@@ -993,7 +1006,7 @@ async function deliverBrief(all, dryRun) {
   }
 
   lines.push('='.repeat(64));
-  lines.push(`JAVARI HANDLED:  ${tFiled} notifications filed | ${tQuar} junk quarantined | ${tDeclined} declines filed | ${tVerified} verified automatically`);
+  lines.push(`JAVARI HANDLED:  ${tFiled} records | ${tBroadcast} broadcast | ${tDeclined} declines | ${tQuar} junk | ${tVerified} verified`);
   if (tInvite > 0) lines.push(`OPPORTUNITIES:   ${tInvite} affiliate invitation${tInvite !== 1 ? 's' : ''} — merchants who want to work with us, named above`);
   lines.push(`YOUR INBOX:      ${tAction} action item${tAction !== 1 ? 's' : ''} need your decisions | ${tUnsorted} unsorted | ${tDraft} forgotten draft${tDraft !== 1 ? 's' : ''}`);
   if (tTrunc > 0) lines.push(`NOT FINISHED:    ${tTrunc} mailbox${tTrunc !== 1 ? 'es' : ''} hit the per-run limit — backlog still clearing`);
@@ -1003,7 +1016,7 @@ async function deliverBrief(all, dryRun) {
   const briefText = lines.join('\n');
 
   if (dryRun) {
-    return { tAction, tNotif, tJunk, tDraft, tErr, tFiled, tQuar, tUnsorted, tVerified, tTrunc, tDeclined, tInvite, briefText, dryRun: true };
+    return { tAction, tNotif, tJunk, tDraft, tErr, tFiled, tQuar, tUnsorted, tVerified, tTrunc, tDeclined, tInvite, tBroadcast, briefText, dryRun: true };
   }
 
   const auth = makeOAuth2(process.env.GMAIL_REFRESH_TOKEN_CRAUDIOVIZAI);
@@ -1045,7 +1058,7 @@ async function deliverBrief(all, dryRun) {
     { onConflict: 'brief_date' },
   );
 
-  return { tAction, tNotif, tJunk, tDraft, tErr, tFiled, tQuar, tUnsorted, tVerified, tTrunc, tDeclined, tInvite };
+  return { tAction, tNotif, tJunk, tDraft, tErr, tFiled, tQuar, tUnsorted, tVerified, tTrunc, tDeclined, tInvite, tBroadcast };
 }
 
 // ── Vercel handler ────────────────────────────────────────────────────────────
@@ -1064,17 +1077,23 @@ module.exports = async (req, res) => {
 
     const all = [];
 
+    // Seeded from the hand-built map for now; lib/reputation.js will replace
+    // this with the learned store, at which point the seed becomes a starting
+    // position rather than the answer.
+    const reputation = seedReputation();
+    log.push(`[SEED] ${reputation.size} senders carried over from the hand-built map`);
+
     for (const acct of GMAIL_ACCOUNTS) {
       log.push(`[GMAIL] ${acct.label}`);
-      const r = await checkAndManageGmail(acct, dryRun);
+      const r = await checkAndManageGmail(acct, dryRun, reputation);
       all.push(r);
-      log.push(`  → filed:${r.filed} quarantined:${r.quarantined} declined:${r.declined.length} action:${r.action.length} unsorted:${r.unsorted.length} verified:${r.verified.length} err:${r.errors.length}`);
+      log.push(`  → filed:${r.filed} broadcast:${r.broadcast.length} declined:${r.declined.length} action:${r.action.length} invite:${r.invite.length} unsorted:${r.unsorted.length} err:${r.errors.length}`);
     }
 
     if (process.env.AZURE_TENANT_ID && process.env.AZURE_CLIENT_ID && process.env.AZURE_CLIENT_SECRET) {
       log.push('[M365] Getting Graph token');
       const token = await getGraphToken();
-      const m365 = await checkAndManageM365(token, dryRun);
+      const m365 = await checkAndManageM365(token, dryRun, reputation);
       all.push(...m365);
       log.push(`[M365] ${m365.length} mailboxes managed`);
     } else {
@@ -1096,10 +1115,7 @@ module.exports = async (req, res) => {
   }
 };
 
-// Exported for the offline classifier test. A function that decides where 500
-// live messages a day go should be testable without touching a mailbox, and
-// before this there was no way to check a rule change except by running it
-// against Roy's real inbox. See test/classify.test.js.
-module.exports.classify = classify;
-module.exports.addressOf = addressOf;
+// The decision logic now lives in lib/triage.js and is tested directly there,
+// without loading this handler or its googleapis dependency. Only the helper
+// this file owns is exported.
 module.exports.inviteMerchant = inviteMerchant;
