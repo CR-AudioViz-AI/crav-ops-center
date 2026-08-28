@@ -1,0 +1,1234 @@
+{
+ "_readme": [
+  "Sender-level classification for the Javari Email Manager.",
+  "",
+  "WHY THIS EXISTS: 800 messages sat unsorted because keyword rules",
+  "cannot read a sender. 'PersonalHour has invited you to join their",
+  "program' carries no word RX_NOTIF or RX_ACTION was ever going to",
+  "match. The fix is not a longer regex, it is knowing the sender.",
+  "",
+  "Every address here was decided by reading that sender's actual",
+  "subject lines. A sender whose subjects pointed in more than one",
+  "direction is DELIBERATELY ABSENT — absent means unsorted, and",
+  "unsorted means it stays in the inbox. Never guess.",
+  "",
+  "Regenerate: python3 build_sender_map.py",
+  "CR AudioViz AI, LLC - EIN 39-3646201"
+ ],
+ "generated": "2026-08-27",
+ "senders_mapped": 242,
+ "messages_covered": 686,
+ "messages_observed": 718,
+ "senders": [
+  {
+   "address": "a2p10dlc@twilio.com",
+   "bucket": "notif",
+   "evidence": "One-time codes, login alerts and account-change confirmations. Every one is stale by the time it is read."
+  },
+  {
+   "address": "account@twitch.tv",
+   "bucket": "notif",
+   "evidence": "One-time codes, login alerts and account-change confirmations. Every one is stale by the time it is read."
+  },
+  {
+   "address": "account@untappd.com",
+   "bucket": "notif",
+   "evidence": "One-time codes, login alerts and account-change confirmations. Every one is stale by the time it is read."
+  },
+  {
+   "address": "accounting@zapier.com",
+   "bucket": "action",
+   "evidence": "A human or a ticketing system continuing a conversation WE started. A vendor replying to our own ticket is the one category where filing it away costs money."
+  },
+  {
+   "address": "accounts@dynadot.com",
+   "bucket": "notif",
+   "evidence": "One-time codes, login alerts and account-change confirmations. Every one is stale by the time it is read."
+  },
+  {
+   "address": "accounts@firefox.com",
+   "bucket": "notif",
+   "evidence": "One-time codes, login alerts and account-change confirmations. Every one is stale by the time it is read."
+  },
+  {
+   "address": "admin@aiperfectvideo.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "admin@akool.io",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "admin@info.smallbusinessdigitalready.verizon.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "admin@perfectaivideo.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "affiliate@discovercars.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "affiliate@timekettle.co",
+   "bucket": "invite",
+   "evidence": "An affiliate or partner network telling us a merchant wants CR AudioViz in their program. These are inbound business offers, not notifications — every one is a merchant asking to be sold."
+  },
+  {
+   "address": "affiliates@andyanand.com",
+   "bucket": "invite",
+   "evidence": "An affiliate or partner network telling us a merchant wants CR AudioViz in their program. These are inbound business offers, not notifications — every one is a merchant asking to be sold."
+  },
+  {
+   "address": "affiliates@dynadot.com",
+   "bucket": "invite",
+   "evidence": "An affiliate or partner network telling us a merchant wants CR AudioViz in their program. These are inbound business offers, not notifications — every one is a merchant asking to be sold."
+  },
+  {
+   "address": "affiliates@elevenlabs.io",
+   "bucket": "invite",
+   "evidence": "An affiliate or partner network telling us a merchant wants CR AudioViz in their program. These are inbound business offers, not notifications — every one is a merchant asking to be sold."
+  },
+  {
+   "address": "affiliates@omoshealthcare.com",
+   "bucket": "invite",
+   "evidence": "An affiliate or partner network telling us a merchant wants CR AudioViz in their program. These are inbound business offers, not notifications — every one is a merchant asking to be sold."
+  },
+  {
+   "address": "affiliates@squaremouth.com",
+   "bucket": "invite",
+   "evidence": "An affiliate or partner network telling us a merchant wants CR AudioViz in their program. These are inbound business offers, not notifications — every one is a merchant asking to be sold."
+  },
+  {
+   "address": "alice@helloalice.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "announcements@figma.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "ant.wilson@supabase.com",
+   "bucket": "notif",
+   "evidence": "API keys, quotas, service status and platform change notices. Operational facts we act on from the dashboard, not the inbox."
+  },
+  {
+   "address": "api-management@graphhopper.com",
+   "bucket": "notif",
+   "evidence": "API keys, quotas, service status and platform change notices. Operational facts we act on from the dashboard, not the inbox."
+  },
+  {
+   "address": "api@coingecko.com",
+   "bucket": "notif",
+   "evidence": "API keys, quotas, service status and platform change notices. Operational facts we act on from the dashboard, not the inbox."
+  },
+  {
+   "address": "api@europeana.eu",
+   "bucket": "notif",
+   "evidence": "API keys, quotas, service status and platform change notices. Operational facts we act on from the dashboard, not the inbox."
+  },
+  {
+   "address": "app+canned.response@base44.com",
+   "bucket": "action",
+   "evidence": "A human or a ticketing system continuing a conversation WE started. A vendor replying to our own ticket is the one category where filing it away costs money."
+  },
+  {
+   "address": "app@base44.com",
+   "bucket": "action",
+   "evidence": "A human or a ticketing system continuing a conversation WE started. A vendor replying to our own ticket is the one category where filing it away costs money."
+  },
+  {
+   "address": "assist@t.openai.com",
+   "bucket": "action",
+   "evidence": "A human or a ticketing system continuing a conversation WE started. A vendor replying to our own ticket is the one category where filing it away costs money."
+  },
+  {
+   "address": "aws-marketing-email-replies@amazon.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "azure@infoemails.microsoft.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "azure@promomail.microsoft.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "barrifn@amazon.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "billing@replicate.email",
+   "bucket": "notif",
+   "evidence": "Payment receipts, invoices and refund confirmations. Money that already moved: worth keeping, never worth interrupting for."
+  },
+  {
+   "address": "billing@tm1.openai.com",
+   "bucket": "notif",
+   "evidence": "Payment receipts, invoices and refund confirmations. Money that already moved: worth keeping, never worth interrupting for."
+  },
+  {
+   "address": "billing@webflow.com",
+   "bucket": "notif",
+   "evidence": "Payment receipts, invoices and refund confirmations. Money that already moved: worth keeping, never worth interrupting for."
+  },
+  {
+   "address": "billing@zapier.com",
+   "bucket": "action",
+   "evidence": "A human or a ticketing system continuing a conversation WE started. A vendor replying to our own ticket is the one category where filing it away costs money."
+  },
+  {
+   "address": "booking@tapt.viator.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "booking_br.latam@cj.com",
+   "bucket": "action",
+   "evidence": "A human or a ticketing system continuing a conversation WE started. A vendor replying to our own ticket is the one category where filing it away costs money."
+  },
+  {
+   "address": "brian.holt@neon.tech",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "broadcast@dealnotes.ai",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "bryan@neon.tech",
+   "bucket": "action",
+   "evidence": "A human or a ticketing system continuing a conversation WE started. A vendor replying to our own ticket is the one category where filing it away costs money."
+  },
+  {
+   "address": "ccruz@digitalocean.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "channing@indiehackers.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "charles.fernandes@c-openai.com",
+   "bucket": "action",
+   "evidence": "A human or a ticketing system continuing a conversation WE started. A vendor replying to our own ticket is the one category where filing it away costs money."
+  },
+  {
+   "address": "cindy@rentcast.io",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "cloud-manager-support@mongodb.com",
+   "bucket": "notif",
+   "evidence": "One-time codes, login alerts and account-change confirmations. Every one is stale by the time it is read."
+  },
+  {
+   "address": "cloud-startup-support-bot@google.com",
+   "bucket": "action",
+   "evidence": "A human or a ticketing system continuing a conversation WE started. A vendor replying to our own ticket is the one category where filing it away costs money."
+  },
+  {
+   "address": "cloudstartupsupport@google.com",
+   "bucket": "action",
+   "evidence": "A human or a ticketing system continuing a conversation WE started. A vendor replying to our own ticket is the one category where filing it away costs money."
+  },
+  {
+   "address": "communications@crossway.org",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "communications@heigit.org",
+   "bucket": "notif",
+   "evidence": "One-time codes, login alerts and account-change confirmations. Every one is stale by the time it is read."
+  },
+  {
+   "address": "community@getresponse.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "contact@hello.webflow.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "corphelp@dos.fl.gov",
+   "bucket": "action",
+   "evidence": "A human or a ticketing system continuing a conversation WE started. A vendor replying to our own ticket is the one category where filing it away costs money."
+  },
+  {
+   "address": "cory@info.synthesia.io",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "coteam@neon.tech",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "data-licensing@yelp.com",
+   "bucket": "notif",
+   "evidence": "API keys, quotas, service status and platform change notices. Operational facts we act on from the dashboard, not the inbox."
+  },
+  {
+   "address": "dcastro@yelp.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "delivery@unsplash.com",
+   "bucket": "notif",
+   "evidence": "One-time codes, login alerts and account-change confirmations. Every one is stale by the time it is read."
+  },
+  {
+   "address": "derk@shotstack.io",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "developer@groq.co",
+   "bucket": "notif",
+   "evidence": "API keys, quotas, service status and platform change notices. Operational facts we act on from the dashboard, not the inbox."
+  },
+  {
+   "address": "devs@learn.deepgram.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "digital-cs@cloudinary.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "dms@airnowtech.org",
+   "bucket": "notif",
+   "evidence": "API keys, quotas, service status and platform change notices. Operational facts we act on from the dashboard, not the inbox."
+  },
+  {
+   "address": "dx@render.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "e.email@dnb.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "ebird@birds.cornell.edu",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "ed@relyhome.com",
+   "bucket": "invite",
+   "evidence": "An affiliate or partner network telling us a merchant wants CR AudioViz in their program. These are inbound business offers, not notifications — every one is a merchant asking to be sold."
+  },
+  {
+   "address": "edwin.martinez@netlify.com",
+   "bucket": "action",
+   "evidence": "A human or a ticketing system continuing a conversation WE started. A vendor replying to our own ticket is the one category where filing it away costs money."
+  },
+  {
+   "address": "em@em1.cloudflare.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "email@tapt.viator.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "emails@emails.rakuten.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "en@hostingerdomains.com",
+   "bucket": "notif",
+   "evidence": "One-time codes, login alerts and account-change confirmations. Every one is stale by the time it is read."
+  },
+  {
+   "address": "ericsimons@bolt.new",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "ericsimons@stackblitz.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "events@seatgeek.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "events@send.zapier.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "failed-payments+acct_1qk05ld5kgnlq3da@stripe.com",
+   "bucket": "action",
+   "evidence": "A human or a ticketing system continuing a conversation WE started. A vendor replying to our own ticket is the one category where filing it away costs money."
+  },
+  {
+   "address": "feedback@rawg.io",
+   "bucket": "notif",
+   "evidence": "One-time codes, login alerts and account-change confirmations. Every one is stale by the time it is read."
+  },
+  {
+   "address": "flaviar@afftraction.com",
+   "bucket": "invite",
+   "evidence": "An affiliate or partner network telling us a merchant wants CR AudioViz in their program. These are inbound business offers, not notifications — every one is a merchant asking to be sold."
+  },
+  {
+   "address": "friends@unsplash.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "fsdsupport@gsa.gov",
+   "bucket": "action",
+   "evidence": "A human or a ticketing system continuing a conversation WE started. A vendor replying to our own ticket is the one category where filing it away costs money."
+  },
+  {
+   "address": "getstarted@backblaze.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "googlecloud@google.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "googlecloudstartups@google.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "googlemapsplatform@google.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "growth@roboflow.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "hello@alchemy.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "hello@api.video",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "hello@bolt.new",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "hello@builder.io",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "hello@cio.discogs.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "hello@coingecko.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "hello@fivetran.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "hello@ko-fi.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "hello@mapbox.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "hello@mercury.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "hello@mk.ipinfo.io",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "hello@newsdata.io",
+   "bucket": "notif",
+   "evidence": "API keys, quotas, service status and platform change notices. Operational facts we act on from the dashboard, not the inbox."
+  },
+  {
+   "address": "hello@partnerstackmail.com",
+   "bucket": "invite",
+   "evidence": "An affiliate or partner network telling us a merchant wants CR AudioViz in their program. These are inbound business offers, not notifications — every one is a merchant asking to be sold."
+  },
+  {
+   "address": "hello@render.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "hello@roboflow.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "hello@send.zapier.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "hello@stackblitz.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "hello@tailscale.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "hello@travelpayouts.com",
+   "bucket": "invite",
+   "evidence": "An affiliate or partner network telling us a merchant wants CR AudioViz in their program. These are inbound business offers, not notifications — every one is a merchant asking to be sold."
+  },
+  {
+   "address": "help@awin.com",
+   "bucket": "invite",
+   "evidence": "An affiliate or partner network telling us a merchant wants CR AudioViz in their program. These are inbound business offers, not notifications — every one is a merchant asking to be sold."
+  },
+  {
+   "address": "help@data.world",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "hey@jasper.ai",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "hey@posthog.com",
+   "bucket": "notif",
+   "evidence": "One-time codes, login alerts and account-change confirmations. Every one is stale by the time it is read."
+  },
+  {
+   "address": "hi@simple.ai",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "hi@update.betterstack.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "imarku@imarku.net",
+   "bucket": "invite",
+   "evidence": "An affiliate or partner network telling us a merchant wants CR AudioViz in their program. These are inbound business offers, not notifications — every one is a merchant asking to be sold."
+  },
+  {
+   "address": "imogen@elevenlabs.io",
+   "bucket": "invite",
+   "evidence": "An affiliate or partner network telling us a merchant wants CR AudioViz in their program. These are inbound business offers, not notifications — every one is a merchant asking to be sold."
+  },
+  {
+   "address": "inaturalist@inaturalist.org",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "inceptionprogram@nvidia.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "info@akool.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "info@backblaze.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "info@builder.io",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "info@cerebras.net",
+   "bucket": "notif",
+   "evidence": "API keys, quotas, service status and platform change notices. Operational facts we act on from the dashboard, not the inbox."
+  },
+  {
+   "address": "info@groq.co",
+   "bucket": "notif",
+   "evidence": "API keys, quotas, service status and platform change notices. Operational facts we act on from the dashboard, not the inbox."
+  },
+  {
+   "address": "info@rescuegroups.org",
+   "bucket": "notif",
+   "evidence": "API keys, quotas, service status and platform change notices. Operational facts we act on from the dashboard, not the inbox."
+  },
+  {
+   "address": "info@seatgeek.com",
+   "bucket": "notif",
+   "evidence": "One-time codes, login alerts and account-change confirmations. Every one is stale by the time it is read."
+  },
+  {
+   "address": "info@ses.uptimerobot.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "info@uptimerobot.com",
+   "bucket": "notif",
+   "evidence": "API keys, quotas, service status and platform change notices. Operational facts we act on from the dashboard, not the inbox."
+  },
+  {
+   "address": "info@walkscore.com",
+   "bucket": "notif",
+   "evidence": "API keys, quotas, service status and platform change notices. Operational facts we act on from the dashboard, not the inbox."
+  },
+  {
+   "address": "inquiries@fireworks.ai",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "invitations@ravelry.com",
+   "bucket": "notif",
+   "evidence": "One-time codes, login alerts and account-change confirmations. Every one is stale by the time it is read."
+  },
+  {
+   "address": "invoice+statements+acct_15ypnsjamnyvovfn@stripe.com",
+   "bucket": "notif",
+   "evidence": "Payment receipts, invoices and refund confirmations. Money that already moved: worth keeping, never worth interrupting for."
+  },
+  {
+   "address": "invoice+statements+acct_1epydaahwgq34jln@stripe.com",
+   "bucket": "notif",
+   "evidence": "Payment receipts, invoices and refund confirmations. Money that already moved: worth keeping, never worth interrupting for."
+  },
+  {
+   "address": "invoice+statements+acct_1m07hslmdodimxbs@stripe.com",
+   "bucket": "notif",
+   "evidence": "Payment receipts, invoices and refund confirmations. Money that already moved: worth keeping, never worth interrupting for."
+  },
+  {
+   "address": "invoice+statements+acct_1m2aunf3kn0lqxpp@stripe.com",
+   "bucket": "notif",
+   "evidence": "Payment receipts, invoices and refund confirmations. Money that already moved: worth keeping, never worth interrupting for."
+  },
+  {
+   "address": "invoice+statements+acct_1m5es1anciss0kgj@stripe.com",
+   "bucket": "notif",
+   "evidence": "Payment receipts, invoices and refund confirmations. Money that already moved: worth keeping, never worth interrupting for."
+  },
+  {
+   "address": "invoice+statements+acct_1mteueaya3qpetab@stripe.com",
+   "bucket": "notif",
+   "evidence": "Payment receipts, invoices and refund confirmations. Money that already moved: worth keeping, never worth interrupting for."
+  },
+  {
+   "address": "invoice+statements@render.com",
+   "bucket": "notif",
+   "evidence": "Payment receipts, invoices and refund confirmations. Money that already moved: worth keeping, never worth interrupting for."
+  },
+  {
+   "address": "invoice+statements@replicate.com",
+   "bucket": "notif",
+   "evidence": "Payment receipts, invoices and refund confirmations. Money that already moved: worth keeping, never worth interrupting for."
+  },
+  {
+   "address": "invoice+statements@supabase.com",
+   "bucket": "notif",
+   "evidence": "Payment receipts, invoices and refund confirmations. Money that already moved: worth keeping, never worth interrupting for."
+  },
+  {
+   "address": "invoice+statements@vercel.com",
+   "bucket": "notif",
+   "evidence": "Payment receipts, invoices and refund confirmations. Money that already moved: worth keeping, never worth interrupting for."
+  },
+  {
+   "address": "jamie@jugbow.com",
+   "bucket": "invite",
+   "evidence": "An affiliate or partner network telling us a merchant wants CR AudioViz in their program. These are inbound business offers, not notifications — every one is a merchant asking to be sold."
+  },
+  {
+   "address": "jamil.a@crawlbase.com",
+   "bucket": "action",
+   "evidence": "A human or a ticketing system continuing a conversation WE started. A vendor replying to our own ticket is the one category where filing it away costs money."
+  },
+  {
+   "address": "joe@posthog.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "jomauricio@growth.stripe.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "jomauricio@sales.stripe.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "julia@hello.remove.bg",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "ko-fi@ko-fi.com",
+   "bucket": "notif",
+   "evidence": "One-time codes, login alerts and account-change confirmations. Every one is stale by the time it is read."
+  },
+  {
+   "address": "learn@send.zapier.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "letschat@partnerstack.com",
+   "bucket": "invite",
+   "evidence": "An affiliate or partner network telling us a merchant wants CR AudioViz in their program. These are inbound business offers, not notifications — every one is a merchant asking to be sold."
+  },
+  {
+   "address": "lexi@adagio.com",
+   "bucket": "invite",
+   "evidence": "An affiliate or partner network telling us a merchant wants CR AudioViz in their program. These are inbound business offers, not notifications — every one is a merchant asking to be sold."
+  },
+  {
+   "address": "mail@spoonacular.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "memberservices@messages.rakuten.com",
+   "bucket": "notif",
+   "evidence": "One-time codes, login alerts and account-change confirmations. Every one is stale by the time it is read."
+  },
+  {
+   "address": "mia@jugbow.com",
+   "bucket": "invite",
+   "evidence": "An affiliate or partner network telling us a merchant wants CR AudioViz in their program. These are inbound business offers, not notifications — every one is a merchant asking to be sold."
+  },
+  {
+   "address": "microsoftaccount@emailnotifications.microsoft.com",
+   "bucket": "notif",
+   "evidence": "One-time codes, login alerts and account-change confirmations. Every one is stale by the time it is read."
+  },
+  {
+   "address": "microsoftexchange329e71ec88ae4615bbc36ab6ce41109e@craudiovizai.onmicrosoft.com",
+   "bucket": "notif",
+   "evidence": "One-time codes, login alerts and account-change confirmations. Every one is stale by the time it is read."
+  },
+  {
+   "address": "mongodb-account@mongodb.com",
+   "bucket": "notif",
+   "evidence": "One-time codes, login alerts and account-change confirmations. Every one is stale by the time it is read."
+  },
+  {
+   "address": "mongodb@team.mongodb.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "myg2@account.g2.com",
+   "bucket": "action",
+   "evidence": "A human or a ticketing system continuing a conversation WE started. A vendor replying to our own ticket is the one category where filing it away costs money."
+  },
+  {
+   "address": "nickolas.murdakes@algolia.com",
+   "bucket": "action",
+   "evidence": "A human or a ticketing system continuing a conversation WE started. A vendor replying to our own ticket is the one category where filing it away costs money."
+  },
+  {
+   "address": "no-response@cj.com",
+   "bucket": "notif",
+   "evidence": "One-time codes, login alerts and account-change confirmations. Every one is stale by the time it is read."
+  },
+  {
+   "address": "nora739109685@gmail.com",
+   "bucket": "invite",
+   "evidence": "An affiliate or partner network telling us a merchant wants CR AudioViz in their program. These are inbound business offers, not notifications — every one is a merchant asking to be sold."
+  },
+  {
+   "address": "notify@updates.notion.so",
+   "bucket": "notif",
+   "evidence": "One-time codes, login alerts and account-change confirmations. Every one is stale by the time it is read."
+  },
+  {
+   "address": "o365mc@microsoft.com",
+   "bucket": "notif",
+   "evidence": "API keys, quotas, service status and platform change notices. Operational facts we act on from the dashboard, not the inbox."
+  },
+  {
+   "address": "onboarding@algolia.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "onboarding@hunter.io",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "onboarding@resend.dev",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "onedrive@infomail.microsoft.com",
+   "bucket": "notif",
+   "evidence": "API keys, quotas, service status and platform change notices. Operational facts we act on from the dashboard, not the inbox."
+  },
+  {
+   "address": "partners@aff.mk2.viator.com",
+   "bucket": "invite",
+   "evidence": "An affiliate or partner network telling us a merchant wants CR AudioViz in their program. These are inbound business offers, not notifications — every one is a merchant asking to be sold."
+  },
+  {
+   "address": "partners@wardrobesupplies.com",
+   "bucket": "invite",
+   "evidence": "An affiliate or partner network telling us a merchant wants CR AudioViz in their program. These are inbound business offers, not notifications — every one is a merchant asking to be sold."
+  },
+  {
+   "address": "partnersuccess@awin.com",
+   "bucket": "action",
+   "evidence": "A human or a ticketing system continuing a conversation WE started. A vendor replying to our own ticket is the one category where filing it away costs money."
+  },
+  {
+   "address": "pinbot@info.pinterest.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "pinterest-recommendations@ideas.pinterest.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "pixabay@community.pixabay.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "product@engage.canva.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "product@fireworks.ai",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "product@getstream.io",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "product@netdata.cloud",
+   "bucket": "notif",
+   "evidence": "API keys, quotas, service status and platform change notices. Operational facts we act on from the dashboard, not the inbox."
+  },
+  {
+   "address": "pubsupport@rakuten.com",
+   "bucket": "action",
+   "evidence": "A human or a ticketing system continuing a conversation WE started. A vendor replying to our own ticket is the one category where filing it away costs money."
+  },
+  {
+   "address": "rahul@imagekit.io",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "receipts+acct_1pksddhjohyvid2c@stripe.com",
+   "bucket": "notif",
+   "evidence": "Payment receipts, invoices and refund confirmations. Money that already moved: worth keeping, never worth interrupting for."
+  },
+  {
+   "address": "receipts@openrouter.ai",
+   "bucket": "notif",
+   "evidence": "Payment receipts, invoices and refund confirmations. Money that already moved: worth keeping, never worth interrupting for."
+  },
+  {
+   "address": "recommendations@discover.pinterest.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "recommendations@explore.pinterest.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "reply@getresponse.com",
+   "bucket": "notif",
+   "evidence": "One-time codes, login alerts and account-change confirmations. Every one is stale by the time it is read."
+  },
+  {
+   "address": "reply@outreach.sba.gov",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "robot2@openweathermap.org",
+   "bucket": "notif",
+   "evidence": "One-time codes, login alerts and account-change confirmations. Every one is stale by the time it is read."
+  },
+  {
+   "address": "robot5@openweathermap.org",
+   "bucket": "notif",
+   "evidence": "API keys, quotas, service status and platform change notices. Operational facts we act on from the dashboard, not the inbox."
+  },
+  {
+   "address": "rotem@tavily.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "ryans@assemblyai.com",
+   "bucket": "action",
+   "evidence": "A human or a ticketing system continuing a conversation WE started. A vendor replying to our own ticket is the one category where filing it away costs money."
+  },
+  {
+   "address": "sabina.maliseva@discovercarhire.com",
+   "bucket": "action",
+   "evidence": "A human or a ticketing system continuing a conversation WE started. A vendor replying to our own ticket is the one category where filing it away costs money."
+  },
+  {
+   "address": "security@getgitguardian.com",
+   "bucket": "action",
+   "evidence": "A human or a ticketing system continuing a conversation WE started. A vendor replying to our own ticket is the one category where filing it away costs money."
+  },
+  {
+   "address": "skip@info.helloskip.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "sns@synologynotification.com",
+   "bucket": "notif",
+   "evidence": "One-time codes, login alerts and account-change confirmations. Every one is stale by the time it is read."
+  },
+  {
+   "address": "solutions-hub@impact.com",
+   "bucket": "action",
+   "evidence": "A human or a ticketing system continuing a conversation WE started. A vendor replying to our own ticket is the one category where filing it away costs money."
+  },
+  {
+   "address": "start@engage.canva.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "support@agent.ai",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "support@api.bible",
+   "bucket": "notif",
+   "evidence": "API keys, quotas, service status and platform change notices. Operational facts we act on from the dashboard, not the inbox."
+  },
+  {
+   "address": "support@apilayer.com",
+   "bucket": "notif",
+   "evidence": "One-time codes, login alerts and account-change confirmations. Every one is stale by the time it is read."
+  },
+  {
+   "address": "support@buymeacoffee.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "support@cj.com",
+   "bucket": "action",
+   "evidence": "A human or a ticketing system continuing a conversation WE started. A vendor replying to our own ticket is the one category where filing it away costs money."
+  },
+  {
+   "address": "support@cloudinary.com",
+   "bucket": "notif",
+   "evidence": "API keys, quotas, service status and platform change notices. Operational facts we act on from the dashboard, not the inbox."
+  },
+  {
+   "address": "support@cntnpath.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "support@cohere.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "support@info.printful.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "support@rapidapi.com",
+   "bucket": "notif",
+   "evidence": "API keys, quotas, service status and platform change notices. Operational facts we act on from the dashboard, not the inbox."
+  },
+  {
+   "address": "support@rebrickable.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "support@restoreroute.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "support@supabase.com",
+   "bucket": "action",
+   "evidence": "A human or a ticketing system continuing a conversation WE started. A vendor replying to our own ticket is the one category where filing it away costs money."
+  },
+  {
+   "address": "support@supabase.io",
+   "bucket": "notif",
+   "evidence": "API keys, quotas, service status and platform change notices. Operational facts we act on from the dashboard, not the inbox."
+  },
+  {
+   "address": "support@thenewsapi.com",
+   "bucket": "notif",
+   "evidence": "One-time codes, login alerts and account-change confirmations. Every one is stale by the time it is read."
+  },
+  {
+   "address": "support@tinify.com",
+   "bucket": "notif",
+   "evidence": "API keys, quotas, service status and platform change notices. Operational facts we act on from the dashboard, not the inbox."
+  },
+  {
+   "address": "support@trakt.tv",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "support@travelpayouts.com",
+   "bucket": "invite",
+   "evidence": "An affiliate or partner network telling us a merchant wants CR AudioViz in their program. These are inbound business offers, not notifications — every one is a merchant asking to be sold."
+  },
+  {
+   "address": "support@twelvelabs.io",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "support@twiliosendgrid.zendesk.com",
+   "bucket": "action",
+   "evidence": "A human or a ticketing system continuing a conversation WE started. A vendor replying to our own ticket is the one category where filing it away costs money."
+  },
+  {
+   "address": "support@wasabi.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "synology@news.synology.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "t.email@dnb.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "team@account.hostinger.com",
+   "bucket": "notif",
+   "evidence": "Payment receipts, invoices and refund confirmations. Money that already moved: worth keeping, never worth interrupting for."
+  },
+  {
+   "address": "team@base44.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "team@comms.assemblyai.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "team@elevenlabs.io",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "team@framer.com",
+   "bucket": "notif",
+   "evidence": "One-time codes, login alerts and account-change confirmations. Every one is stale by the time it is read."
+  },
+  {
+   "address": "team@info.hostinger.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "team@m.ngrok.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "team@netlify.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "team@updates.hostinger.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "team@voyage.mongodb.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "teamtwilio@twilio.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "technology@sba.gov",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "the-messenger@mercury.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "trial@tailscale.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "twilio@qualtrics-survey.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "verify@x.com",
+   "bucket": "notif",
+   "evidence": "One-time codes, login alerts and account-change confirmations. Every one is stale by the time it is read."
+  },
+  {
+   "address": "victor.erukhimov@avatarsdk.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "vydeaccounting@vyde.io",
+   "bucket": "notif",
+   "evidence": "Payment receipts, invoices and refund confirmations. Money that already moved: worth keeping, never worth interrupting for."
+  },
+  {
+   "address": "walkscore@redfin-help.zendesk.com",
+   "bucket": "action",
+   "evidence": "A human or a ticketing system continuing a conversation WE started. A vendor replying to our own ticket is the one category where filing it away costs money."
+  },
+  {
+   "address": "webmaster@floridarevenue.com",
+   "bucket": "action",
+   "evidence": "A human or a ticketing system continuing a conversation WE started. A vendor replying to our own ticket is the one category where filing it away costs money."
+  },
+  {
+   "address": "welcome-to-wix@emails.wix.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "welcome@cerebras.net",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "welcome@openrouter.ai",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "welcome@supabase.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "workspace@google.com",
+   "bucket": "notif",
+   "evidence": "Payment receipts, invoices and refund confirmations. Money that already moved: worth keeping, never worth interrupting for."
+  },
+  {
+   "address": "zana.talijan@allinclusivemarketing.com",
+   "bucket": "invite",
+   "evidence": "An affiliate or partner network telling us a merchant wants CR AudioViz in their program. These are inbound business offers, not notifications — every one is a merchant asking to be sold."
+  },
+  {
+   "address": "zeno.rocha@resend.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "zeno@updates.resend.com",
+   "bucket": "notif",
+   "evidence": "Vendor product marketing, onboarding drips, newsletters and event invitations. Every observed subject from these addresses is bulk-sent to a list."
+  },
+  {
+   "address": "zubar.vladyslav@gmail.com",
+   "bucket": "invite",
+   "evidence": "An affiliate or partner network telling us a merchant wants CR AudioViz in their program. These are inbound business offers, not notifications — every one is a merchant asking to be sold."
+  }
+ ]
+}

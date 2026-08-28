@@ -7,10 +7,60 @@
 //   • Action items   → moved to "Javari/Action-Required" / "Javari-Action-Required",
 //                      listed individually with a specific follow-up instruction
 //   • Verifications  → the link is FOLLOWED, but only for allowlisted senders (see VERIFY)
+//   • Affiliate invites → moved to "Javari/Affiliate-Invites", every merchant
+//                      named in full in the brief
 //   • Unsorted       → LEFT IN THE INBOX, untouched, and listed in the brief
 //   • Forgotten drafts (7d+) → surfaced in the brief, no auto-action
 //
-// Original: 2026-08-20. Revised 2026-08-26 — see CHANGES below.
+// Original: 2026-08-20. Revised 2026-08-26 and 2026-08-27 — see CHANGES below.
+//
+// ─────────────────────────────────────────────────────────────────────────────
+// CHANGES 2026-08-27
+//
+// Written after reading all 718 messages that were sitting unsorted in
+// royhenderson@craudiovizai.com. Not one of the four faults below was a
+// hypothesis; each is something that had already happened.
+//
+// A. KEYWORD RULES CANNOT READ A SENDER. 66 merchants had invited CR AudioViz
+//    into their AWIN programmes and every single invitation was filed "could
+//    not classify":
+//
+//        "PersonalHour has invited you to join their program"
+//
+//    There is no noun in that sentence for a regex to match. The same failure
+//    had already been diagnosed on the product catalogue, where a merchant
+//    called its products "Bloomkin Glow" and defeated every rule ever written
+//    for it. The fix there was to decide per MERCHANT; the fix here is to
+//    decide per SENDER. lib/sender-map.json now holds 242 addresses, each with
+//    the evidence that justified it, and classify() consults it before any
+//    sender pattern. A sender whose subjects pointed in more than one direction
+//    is deliberately absent, and absent still means unsorted.
+//
+// B. RX_PAYMENT_TROUBLE COULD NOT MATCH A DOLLAR AMOUNT. The gap between its
+//    two halves was `[^.]{0,60}` — no period allowed — and the text between
+//    "payment" and "unsuccessful" is nearly always a company name or an amount:
+//
+//        "$465.56 payment to Base44, Inc. was unsuccessful again"
+//
+//    Two periods, no match. A failed charge sat unsorted, which is precisely
+//    the case that rule was written to catch.
+//
+// C. AFFILIATE INVITATIONS ARE NOT NOTIFICATIONS. Roy's call: they get their
+//    own label rather than Action-Required, because 66 of them would have
+//    buried the 9 real decisions, and rather than Notifications, because an
+//    inbound merchant offer is revenue, not a receipt. Moving them out of the
+//    inbox is only acceptable because the brief now names every merchant, in
+//    full, never truncated.
+//
+// D. A VENDOR ANSWERING OUR OWN TICKET WAS BEING FILED AWAY. "Base44 Support
+//    Response: Billed twice for a total over $900" is not a notification. Any
+//    reply marker or ticket reference now promotes a message to action, even
+//    from a sender the map calls marketing — Akool is simultaneously a mailing
+//    list and the counterparty on a $252 refund.
+//
+// And test/classify.test.js now exists. Before it, the only way to check a rule
+// change was to run this against Roy's live mailboxes and read the damage
+// afterwards. Every case in it is a real message from that backlog.
 //
 // ─────────────────────────────────────────────────────────────────────────────
 // CHANGES 2026-08-26
@@ -77,6 +127,7 @@ const GL = {
   notif:    'Javari/Notifications',
   junk:     'Javari/Junk-Review',
   declined: 'Javari/Declined',
+  invite:   'Javari/Affiliate-Invites',
   unsorted: 'Javari/Unsorted',
 };
 
@@ -85,6 +136,7 @@ const MF = {
   notif:    'Javari-Notifications',
   junk:     'Javari-Junk-Review',
   declined: 'Javari-Declined',
+  invite:   'Javari-Affiliate-Invites',
 };
 
 // How many messages one run will look at per mailbox.
@@ -111,7 +163,19 @@ const RX_JUNK = /\b(casino|lottery|you have won|prize claim|million dollars|uncl
 // A payment that failed is ALWAYS an action, and must be tested before the
 // partnership-decline rule below — otherwise "your payment was declined" gets
 // filed away as a record and the card stays broken.
-const RX_PAYMENT_TROUBLE = /\b(payment|card|charge|transaction|billing|invoice|subscription|autopay)\b[^.]{0,60}\b(declined|failed|denied|unsuccessful|could not be processed)\b|\b(declined|failed)\b[^.]{0,40}\b(payment|card|charge)\b/i;
+//
+// 2026-08-27: the gap between the two halves was `[^.]{0,60}` — no period
+// allowed. That is wrong in the exact case this rule exists for, because the
+// text between "payment" and "unsuccessful" is nearly always a company name or
+// an amount, and both contain periods:
+//
+//     "$465.56 payment to Base44, Inc. was unsuccessful again"
+//                              ^^^^  ^
+//
+// Two periods, no match, and a failed charge to Base44 sat unsorted. The class
+// is now [^\n] — still bounded, so it cannot run away across a long body, but
+// it no longer treats a decimal point as the end of the sentence.
+const RX_PAYMENT_TROUBLE = /\b(payment|card|charge|transaction|billing|invoice|subscription|autopay)\b[^\n]{0,60}\b(declined|failed|denied|unsuccessful|could not be processed)\b|\b(declined|failed)\b[^\n]{0,40}\b(payment|card|charge)\b/i;
 
 // An affiliate/partnership rejection. A record, not a decision — Roy asked for
 // these to go to a searchable Declined folder rather than his action list.
@@ -153,6 +217,62 @@ const RX_ALWAYS_ACTION = /\b(overdue|past due|final notice|final demand|suspende
 // unsorted list every morning for the rest of time.
 const RX_SELF = /craudiovizai@gmail\.com/i;
 
+// ── The sender map ────────────────────────────────────────────────────────────
+//
+// 2026-08-27. 800 messages were sitting unsorted across 14 mailboxes, and
+// reading them made the reason obvious: a keyword rule cannot read a sender.
+//
+//     "PersonalHour has invited you to join their program"
+//     "Bloomkin Glow"                     (the same failure in the catalogue)
+//
+// There is no noun in either one for a regex to match. Sixty-six merchants had
+// invited CR AudioViz into their AWIN programmes and every single invitation
+// was filed as "could not classify". The fix is not a longer regex. It is
+// knowing who sent it.
+//
+// sender-map.json holds one decision per address, each with the evidence that
+// justified it, built by reading that sender's actual subject lines. A sender
+// whose subjects pointed in more than one direction is deliberately ABSENT, and
+// absent still means unsorted — the "never guess" rule is unchanged, the map
+// just makes far fewer things guesses.
+const SENDER_MAP = (() => {
+  try {
+    const raw = require('../lib/sender-map.json');
+    const m = new Map();
+    for (const e of raw.senders) m.set(e.address.toLowerCase(), e.bucket);
+    return m;
+  } catch (err) {
+    // A missing or malformed map must not take the run down. Without it every
+    // message simply falls through to the regexes exactly as it did before.
+    console.error('[email-brief] sender map unavailable:', err.message);
+    return new Map();
+  }
+})();
+
+// Pull the bare address out of "Display Name <addr@host>", or accept a bare one.
+function addressOf(from) {
+  const m = /<([^>]+)>/.exec(from || '');
+  return (m ? m[1] : String(from || '')).trim().toLowerCase();
+}
+
+// An affiliate or partner network saying a merchant wants us. Roy's call, made
+// 2026-08-27: these get their own label rather than Action-Required, because 66
+// invitations would have buried the 9 real decisions — and rather than
+// Notifications, because an inbound merchant offer is not a receipt. The brief
+// names every merchant, so filing them out of the inbox loses nothing.
+const RX_INVITE = /\b(has invited you to join|invited you to (their|our) (program|programme)|invitation to (join|partner)|collaboration invitation|let'?s (explore a )?partner)\b/i;
+
+// A reply in a thread WE started. A vendor answering our own ticket is the one
+// category where quietly filing it away costs real money: "Re: Billed twice for
+// a total over $900" is not a notification.
+//
+// Deliberately narrow. It requires a reply marker or an explicit ticket
+// reference — "Re: How is your first week with Bolt.new?" is onboarding drip
+// dressed as a reply, which is why the sender map decides first and this rule
+// only ever gets to see senders the map did not name.
+const RX_THREAD = /^\s*(re|fwd?|aw|antwort)\s*:/i;
+const RX_TICKET = /\b(ticket|case|incident|request)\s*#?\s*(id\s*:?\s*)?[:#]?\s*\d{4,}|\bINC-[A-Z0-9]+|\[#\d{4,}\]/i;
+
 /**
  * Bucket one message.
  *
@@ -161,10 +281,18 @@ const RX_SELF = /craudiovizai@gmail\.com/i;
  *   payment trouble— a failed charge is an action even though it says "declined"
  *   declined       — partnership rejections: a record, filed for search
  *   self           — this tool's own digest
+ *   sender map     — an address we have read and decided about, with evidence
+ *   invite         — a merchant asking to be sold: own label, named in the brief
+ *   thread reply   — a vendor answering a ticket we opened
  *   notif          — automated sender; cannot raise an action however urgent
  *                    its marketing copy sounds
  *   action         — needs a human decision
  *   unsorted       — LEFT IN THE INBOX. Never guess.
+ *
+ * The map sits AFTER the money and rejection rules and BEFORE the sender
+ * regexes. That ordering is the whole design: a sender we have read about beats
+ * a pattern that merely matches its address, but nothing beats a failed payment.
+ * Money first, evidence second, patterns last.
  */
 function classify(from, subject) {
   const t = `${from} ${subject}`;
@@ -173,6 +301,19 @@ function classify(from, subject) {
   if (RX_DECLINED.test(subject) && RX_DECLINE_CONTEXT.test(t)) return 'declined';
   if (RX_ALWAYS_ACTION.test(subject)) return 'action';
   if (RX_SELF.test(from)) return 'notif';
+
+  const mapped = SENDER_MAP.get(addressOf(from));
+  if (mapped) {
+    // One exception to the map: a sender we filed as ordinary vendor mail can
+    // still send a genuine reply to a ticket we opened. Akool is both a
+    // marketing list and the counterparty on a $252 refund.
+    if (mapped === 'notif' && (RX_THREAD.test(subject) || RX_TICKET.test(subject))) {
+      return 'action';
+    }
+    return mapped;
+  }
+
+  if (RX_INVITE.test(subject)) return 'invite';
   if (RX_NOTIF.test(from)) return 'notif';
   if (RX_ACTION.test(t)) return 'action';
   return 'unsorted';
@@ -379,9 +520,9 @@ function gmailBodyText(payload) {
 
 async function checkAndManageGmail({ label, tokenEnv }, dryRun) {
   const r = {
-    account: label, action: [], notif: [], junk: [], declined: [], unsorted: [], drafts: [],
-    verified: [], errors: [], filed: 0, quarantined: 0, labeled_action: 0, declined_filed: 0,
-    truncated: false,
+    account: label, action: [], notif: [], junk: [], declined: [], invite: [], unsorted: [],
+    drafts: [], verified: [], errors: [], filed: 0, quarantined: 0, labeled_action: 0,
+    declined_filed: 0, invites_filed: 0, truncated: false,
   };
   const token = process.env[tokenEnv];
   if (!token) { r.errors.push(`${tokenEnv} not set`); return r; }
@@ -400,17 +541,18 @@ async function checkAndManageGmail({ label, tokenEnv }, dryRun) {
         const byName = (n) => (existing.find((l) => l.name === n) || {}).id;
         labelIds.action = byName(GL.action); labelIds.notif = byName(GL.notif);
         labelIds.junk = byName(GL.junk); labelIds.unsorted = byName(GL.unsorted);
-        labelIds.declined = byName(GL.declined);
+        labelIds.declined = byName(GL.declined); labelIds.invite = byName(GL.invite);
         throw { __skip: true };
       }
       labelIds.action   = await ensureGmailLabel(gmail, GL.action);
       labelIds.notif    = await ensureGmailLabel(gmail, GL.notif);
       labelIds.junk     = await ensureGmailLabel(gmail, GL.junk);
       labelIds.declined = await ensureGmailLabel(gmail, GL.declined);
+      labelIds.invite   = await ensureGmailLabel(gmail, GL.invite);
       labelIds.unsorted = await ensureGmailLabel(gmail, GL.unsorted);
     } catch (e) { if (!e.__skip) r.errors.push(`Label setup: ${e.message}`); }
 
-    const buckets = { action: [], notif: [], junk: [], declined: [], unsorted: [] };
+    const buckets = { action: [], notif: [], junk: [], declined: [], invite: [], unsorted: [] };
     let pageToken;
     let fetched = 0;
 
@@ -498,6 +640,12 @@ async function checkAndManageGmail({ label, tokenEnv }, dryRun) {
       // needs no decision, but it is evidence — never quarantine it as junk.
       if (!dryRun) await batchModify(gmail, buckets.declined, [labelIds.declined], ['INBOX']);
       r.declined_filed = buckets.declined.length;
+    }
+    if (buckets.invite.length && (labelIds.invite || dryRun)) {
+      // Out of the inbox into its own label. Nothing is lost by moving these:
+      // the brief names every merchant that invited us, every morning.
+      if (!dryRun) await batchModify(gmail, buckets.invite, [labelIds.invite], ['INBOX']);
+      r.invites_filed = buckets.invite.length;
     }
     if (buckets.unsorted.length && labelIds.unsorted && !dryRun) {
       // Tagged, NOT moved. It stays in the inbox where Roy will see it.
@@ -627,8 +775,9 @@ async function checkAndManageM365(token, dryRun) {
   } catch (err) {
     return [{
       account: '@craudiovizai.com (discovery failed)', action: [], notif: [], junk: [],
-      declined: [], unsorted: [], drafts: [], verified: [], errors: [err.message],
-      filed: 0, quarantined: 0, labeled_action: 0, declined_filed: 0, truncated: false,
+      declined: [], invite: [], unsorted: [], drafts: [], verified: [], errors: [err.message],
+      filed: 0, quarantined: 0, labeled_action: 0, declined_filed: 0, invites_filed: 0,
+      truncated: false,
     }];
   }
 
@@ -638,9 +787,9 @@ async function checkAndManageM365(token, dryRun) {
   for (const user of users) {
     const addr = user.mail || user.userPrincipalName;
     const r = {
-      account: addr, action: [], notif: [], junk: [], declined: [], unsorted: [], drafts: [],
-      verified: [], errors: [], filed: 0, quarantined: 0, labeled_action: 0, declined_filed: 0,
-      truncated: false,
+      account: addr, action: [], notif: [], junk: [], declined: [], invite: [], unsorted: [],
+      drafts: [], verified: [], errors: [], filed: 0, quarantined: 0, labeled_action: 0,
+      declined_filed: 0, invites_filed: 0, truncated: false,
     };
 
     try {
@@ -651,13 +800,14 @@ async function checkAndManageM365(token, dryRun) {
         folderIds.notif  = await ensureM365Folder(token, user.id, MF.notif);
         folderIds.junk   = await ensureM365Folder(token, user.id, MF.junk);
         folderIds.declined = await ensureM365Folder(token, user.id, MF.declined);
+        folderIds.invite   = await ensureM365Folder(token, user.id, MF.invite);
       } catch (e) { if (!e.__skip) r.errors.push(`Folder setup: ${e.message}`); }
 
       // No isRead filter — the whole inbox. Handled mail leaves the inbox, so
       // this stays idempotent without one.
       let nextLink = `/users/${user.id}/mailFolders/inbox/messages?$select=id,from,subject,bodyPreview&$top=100`;
       let fetched = 0;
-      const ids = { action: [], notif: [], junk: [], declined: [] };
+      const ids = { action: [], notif: [], junk: [], declined: [], invite: [] };
 
       while (nextLink && fetched < PER_MAILBOX_LIMIT) {
         const inbox = await gGet(token, nextLink);
@@ -701,6 +851,7 @@ async function checkAndManageM365(token, dryRun) {
         r.quarantined = ids.junk.length;
         r.labeled_action = ids.action.length;
         r.declined_filed = ids.declined.length;
+        r.invites_filed = ids.invite.length;
       } else {
         if (folderIds.notif && ids.notif.length) {
           const out = await graphMoveBatch(token, user.id, ids.notif, folderIds.notif);
@@ -717,6 +868,10 @@ async function checkAndManageM365(token, dryRun) {
         if (folderIds.declined && ids.declined.length) {
           const out = await graphMoveBatch(token, user.id, ids.declined, folderIds.declined);
           r.declined_filed = out.moved; out.errors.slice(0, 3).forEach((e) => r.errors.push(`declined ${e}`));
+        }
+        if (folderIds.invite && ids.invite.length) {
+          const out = await graphMoveBatch(token, user.id, ids.invite, folderIds.invite);
+          r.invites_filed = out.moved; out.errors.slice(0, 3).forEach((e) => r.errors.push(`invite ${e}`));
         }
       }
       // Unsorted is deliberately not moved.
@@ -747,6 +902,16 @@ function encodeHeader(value) {
   return `=?UTF-8?B?${Buffer.from(value, 'utf8').toString('base64')}?=`;
 }
 
+/**
+ * "PersonalHour has invited you to join their program" -> "PersonalHour".
+ * Falls back to the whole subject rather than guessing, because a merchant name
+ * we mangle is worse than one line of extra text.
+ */
+function inviteMerchant(subject) {
+  const m = /^(.+?)\s+has invited you to join/i.exec(subject || '');
+  return m ? m[1].trim() : (subject || '(no subject)');
+}
+
 async function deliverBrief(all, dryRun) {
   const etDate = new Date().toLocaleDateString('en-US', {
     timeZone: 'America/New_York', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
@@ -755,6 +920,7 @@ async function deliverBrief(all, dryRun) {
 
   let tAction = 0, tNotif = 0, tJunk = 0, tDraft = 0, tErr = 0;
   let tFiled = 0, tQuar = 0, tUnsorted = 0, tVerified = 0, tTrunc = 0, tDeclined = 0;
+  let tInvite = 0;
   const lines = [`JAVARI EMAIL MANAGER — ${etDate}`, '='.repeat(64), ''];
 
   for (const r of all) {
@@ -762,7 +928,8 @@ async function deliverBrief(all, dryRun) {
     const u = (r.unsorted || []).length, d = r.drafts.length, e = r.errors.length;
     const v = (r.verified || []).length;
     const dec = (r.declined || []).length;
-    tDeclined += dec;
+    const inv = (r.invite || []).length;
+    tDeclined += dec; tInvite += inv;
     tAction += a; tNotif += n; tJunk += j; tDraft += d; tErr += e;
     tUnsorted += u; tVerified += v;
     tFiled += (r.filed || 0); tQuar += (r.quarantined || 0);
@@ -770,6 +937,7 @@ async function deliverBrief(all, dryRun) {
 
     lines.push(`📬 ${r.account}`);
     lines.push(`   Javari filed: ${r.filed || 0} notifications | ${r.quarantined || 0} junk quarantined | ${dec} declines filed | ${a} actions need YOU`);
+    if (inv > 0) lines.push(`   ${inv} affiliate invitation${inv !== 1 ? 's' : ''} filed to ${GL.invite} — every merchant is named below`);
     if (u > 0) lines.push(`   ${u} left in your inbox — Javari could not classify ${u !== 1 ? 'them' : 'it'} and did not move ${u !== 1 ? 'them' : 'it'}`);
 
     if (v > 0) {
@@ -787,6 +955,13 @@ async function deliverBrief(all, dryRun) {
         if (m.note) lines.push(`       ⚠ ${m.note}`);
         lines.push(`       → ${suggestFollowUp(m.from, m.subject)}`);
       });
+    }
+    if (inv > 0) {
+      // Listed IN FULL and never truncated. Moving these out of the inbox is
+      // only acceptable because the brief names every one — a merchant asking
+      // to be sold is revenue, and "…and 41 more" would lose it.
+      lines.push(`  🤝 AFFILIATE INVITATIONS — merchants asking to work with us, filed to ${GL.invite}:`);
+      r.invite.forEach((m) => lines.push(`    • ${inviteMerchant(m.subject)}  — ${m.from}`));
     }
     if (dec > 0) {
       lines.push(`  📕 DECLINED — filed to ${GL.declined}, no action needed, searchable later:`);
@@ -819,6 +994,7 @@ async function deliverBrief(all, dryRun) {
 
   lines.push('='.repeat(64));
   lines.push(`JAVARI HANDLED:  ${tFiled} notifications filed | ${tQuar} junk quarantined | ${tDeclined} declines filed | ${tVerified} verified automatically`);
+  if (tInvite > 0) lines.push(`OPPORTUNITIES:   ${tInvite} affiliate invitation${tInvite !== 1 ? 's' : ''} — merchants who want to work with us, named above`);
   lines.push(`YOUR INBOX:      ${tAction} action item${tAction !== 1 ? 's' : ''} need your decisions | ${tUnsorted} unsorted | ${tDraft} forgotten draft${tDraft !== 1 ? 's' : ''}`);
   if (tTrunc > 0) lines.push(`NOT FINISHED:    ${tTrunc} mailbox${tTrunc !== 1 ? 'es' : ''} hit the per-run limit — backlog still clearing`);
   if (tErr > 0) lines.push(`Errors: ${tErr} — check account details above`);
@@ -827,7 +1003,7 @@ async function deliverBrief(all, dryRun) {
   const briefText = lines.join('\n');
 
   if (dryRun) {
-    return { tAction, tNotif, tJunk, tDraft, tErr, tFiled, tQuar, tUnsorted, tVerified, tTrunc, tDeclined, briefText, dryRun: true };
+    return { tAction, tNotif, tJunk, tDraft, tErr, tFiled, tQuar, tUnsorted, tVerified, tTrunc, tDeclined, tInvite, briefText, dryRun: true };
   }
 
   const auth = makeOAuth2(process.env.GMAIL_REFRESH_TOKEN_CRAUDIOVIZAI);
@@ -869,7 +1045,7 @@ async function deliverBrief(all, dryRun) {
     { onConflict: 'brief_date' },
   );
 
-  return { tAction, tNotif, tJunk, tDraft, tErr, tFiled, tQuar, tUnsorted, tVerified, tTrunc, tDeclined };
+  return { tAction, tNotif, tJunk, tDraft, tErr, tFiled, tQuar, tUnsorted, tVerified, tTrunc, tDeclined, tInvite };
 }
 
 // ── Vercel handler ────────────────────────────────────────────────────────────
@@ -919,3 +1095,11 @@ module.exports = async (req, res) => {
     });
   }
 };
+
+// Exported for the offline classifier test. A function that decides where 500
+// live messages a day go should be testable without touching a mailbox, and
+// before this there was no way to check a rule change except by running it
+// against Roy's real inbox. See test/classify.test.js.
+module.exports.classify = classify;
+module.exports.addressOf = addressOf;
+module.exports.inviteMerchant = inviteMerchant;

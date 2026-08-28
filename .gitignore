@@ -57,3 +57,4 @@ serviceAccountKey.json
 tmp/
 temp/
 *.tmp
+email-manager/node_modules/
