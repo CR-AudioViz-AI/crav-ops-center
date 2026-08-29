@@ -1,0 +1,8 @@
+{
+  "crons": [
+    { "path": "/api/email-brief", "schedule": "0 11 * * *" }
+  ],
+  "functions": {
+    "api/email-brief.js": { "maxDuration": 300 }
+  }
+}
