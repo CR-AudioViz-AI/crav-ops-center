@@ -35,7 +35,33 @@ const nextConfig = {
 // minified; file and line still report.
 const { withSentryConfig } = require("@sentry/nextjs");
 
-module.exports = withSentryConfig(nextConfig, {
-  silent: true,
-  sourcemaps: { disable: true },
-});
+// 2026-08-28: withSentryConfig REMOVED, and this is why.
+//
+// Builds on this lineage failed with:
+//   UnhandledSchemeError: Reading from "node:crypto" is not handled by plugins
+//   trace: node:crypto -> lib/platform-secrets/crypto.ts -> lib/vault/getSecret.ts
+//          -> lib/platform-secrets/getSecret.ts -> lib/platform-secrets/env-shim.ts
+//
+// env-shim is reached from instrumentation.ts. The
+// `if (NEXT_RUNTIME !== "nodejs") return;` guard inside register() is a RUNTIME
+// check, so webpack still follows the import while BUILDING the edge bundle, and
+// the edge target cannot resolve a node: scheme.
+//
+// PROVEN BY BISECTION. Removing withSentryConfig and changing nothing else
+// compiles cleanly. Three webpack-level attempts did NOT work and are
+// deliberately not kept:
+//   - resolve.fallback keyed on !isServer   (edge reports isServer TRUE)
+//   - fallback/alias with node:-prefixed keys, and alias:false
+//     (webpack rejects the node: URI at the SCHEME stage, before either is
+//      consulted — hence UnhandledSchemeError rather than "Can't resolve")
+//   - alias pointing at a real stub module
+// Adding the missing sentry.edge.config.ts did not fix it either.
+// The webpack block above is UNCHANGED; it was never the problem.
+//
+// TRADE-OFF: this drops Sentry's build-time plugin — release association and
+// server-side auto-instrumentation. sentry.server.config.ts still runs from
+// instrumentation.ts, so runtime error capture is unaffected. Restoring the
+// plugin needs instrumentation.ts to stop reaching node:crypto, i.e. porting
+// lib/platform-secrets/crypto.ts to Web Crypto — a real change to the credential
+// store, not something to rush.
+module.exports = nextConfig;
