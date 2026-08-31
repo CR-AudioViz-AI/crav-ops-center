@@ -89,8 +89,20 @@ export async function installEnvShim(): Promise<{ hydrated: number; skipped: num
   let skipped = 0;
   const keys = HYDRATE_KEYS.filter((k) => !BOOTSTRAP.has(k));
 
+  // 2026-08-31: ONE round trip, PARALLEL derivation.
+  //
+  // warmSecrets made one HTTP request PER SECRET and derived each key with a
+  // blocking pbkdf2Sync. At ~23 ms per derivation the cost is serialised, and on
+  // core that overran the hydration ceiling — hydration was cut off mid-flight on
+  // every cold start and whatever had not been derived never reached process.env.
+  //
+  // bulkLoadSecrets fetches every row in a single PostgREST select and derives on
+  // libuv's threadpool, so the work runs in parallel and the event loop stays free.
+  // Core's cold start went from 9,258 ms with groq:error:401 to 151 ms healthy.
+  let loaded: Record<string, string> = {};
   try {
-    await warmSecrets(keys);
+    const { bulkLoadSecrets } = await import("@/lib/vault/bulkLoad");
+    loaded = await bulkLoadSecrets(keys);
   } catch {
     // A vault that will not answer leaves every value exactly as Vercel set it.
     // The app runs on its previous configuration rather than refusing to boot,
@@ -99,7 +111,7 @@ export async function installEnvShim(): Promise<{ hydrated: number; skipped: num
   }
 
   for (const key of keys) {
-    const value = getSecretSync(key);
+    const value = loaded[key] ?? null;
     if (value === null) { skipped++; continue; }
     // THE VAULT WINS. This overwrites a Vercel env var of the same name, and that
     // is deliberate.
