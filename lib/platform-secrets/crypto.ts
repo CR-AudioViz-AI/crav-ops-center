@@ -46,7 +46,15 @@ function keyMaterial(): string {
 }
 
 function deriveKey(saltHex: string): Buffer {
-  return pbkdf2Sync(keyMaterial(), Buffer.from(saltHex, "hex"), ITERATIONS, KEY_LEN, "sha256");
+  // 2026-09-01: Uint8Array wrappers throughout this file.
+  //
+  // Under @types/node 20+ with TypeScript 5.7, Buffer is generic over its backing
+  // ArrayBufferLike and no longer directly assignable to Uint8Array. Repos on the
+  // older types compiled this happily; javari-logo, on the newer ones, reported ten
+  // errors from this file alone. The bytes are unchanged — only the type the
+  // signature will accept — and wrapping satisfies BOTH versions rather than
+  // pinning either.
+  return pbkdf2Sync(keyMaterial(), new Uint8Array(Buffer.from(saltHex, "hex")), ITERATIONS, KEY_LEN, "sha256");
 }
 
 /** Encrypt to a v1 authenticated envelope, base64(JSON). */
@@ -54,9 +62,9 @@ export function encryptValue(plaintext: string): string {
   if (typeof plaintext !== "string") throw new TypeError("encryptValue: plaintext must be a string");
   const salt = randomBytes(32);
   const iv = randomBytes(IV_LEN);
-  const key = pbkdf2Sync(keyMaterial(), salt, ITERATIONS, KEY_LEN, "sha256");
-  const cipher = createCipheriv(ALGORITHM, key, iv);
-  const ct = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
+  const key = pbkdf2Sync(keyMaterial(), new Uint8Array(salt), ITERATIONS, KEY_LEN, "sha256");
+  const cipher = createCipheriv(ALGORITHM, new Uint8Array(key), new Uint8Array(iv));
+  const ct = Buffer.concat([new Uint8Array(cipher.update(plaintext, "utf8")), new Uint8Array(cipher.final())]);
   const tag = cipher.getAuthTag();
   const env: EncryptedEnvelope = {
     v: 1, salt: salt.toString("hex"), iv: iv.toString("hex"),
@@ -83,9 +91,9 @@ export function decryptValue(stored: string): string {
   }
   if (env.v === 1 && env.salt && env.iv && env.tag) {
     const key = deriveKey(env.salt);
-    const decipher = createDecipheriv(ALGORITHM, key, Buffer.from(env.iv, "hex"));
-    decipher.setAuthTag(Buffer.from(env.tag, "hex"));
-    const pt = Buffer.concat([decipher.update(Buffer.from(env.ct, "hex")), decipher.final()]);
+    const decipher = createDecipheriv(ALGORITHM, new Uint8Array(key), new Uint8Array(Buffer.from(env.iv, "hex")));
+    decipher.setAuthTag(new Uint8Array(Buffer.from(env.tag, "hex")));
+    const pt = Buffer.concat([new Uint8Array(decipher.update(new Uint8Array(Buffer.from(env.ct, "hex")))), new Uint8Array(decipher.final())]);
     return pt.toString("utf8");
   }
   throw new Error(`decryptValue: unsupported envelope version ${env.v}`);
