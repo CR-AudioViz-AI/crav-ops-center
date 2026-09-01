@@ -1,40 +1,6 @@
 {
-  "$comment": [
-    "2026-09-01. Restored explicit after an attempt to extend",
-    "@craudioviz/platform-sdk/config/tsconfig.base.json failed: the published package",
-    "does not ship its config/ directory, so `extends` did not resolve and every",
-    "option was lost \u2014 including jsx, which produced hundreds of TS17004 errors in",
-    "repos that had been green.",
-    "",
-    "These values are identical to the SDK base. This file should extend it once the",
-    "package exports it."
-  ],
+  "extends": "@craudioviz/platform-sdk/config/tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2020",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "jsx": "preserve",
-    "allowJs": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "isolatedModules": true,
-    "incremental": true,
-    "noEmit": true,
-    "strict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "forceConsistentCasingInFileNames": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
     "paths": {
       "@/*": [
         "./*"
