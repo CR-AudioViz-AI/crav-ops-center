@@ -125,18 +125,33 @@ export async function bulkLoadSecrets(
       if (env.v !== 1 || !env.salt || !env.iv || !env.tag) return;
 
       try {
-        const key = (await pbkdf2Async(
+        // 2026-09-01: every Buffer handed to the crypto API is wrapped in
+        // `new Uint8Array(...)`.
+        //
+        // Under @types/node 20+ with TypeScript 5.7, Buffer became generic over its
+        // backing ArrayBufferLike and is no longer directly assignable to
+        // Uint8Array. Repos on the older types compiled this file happily;
+        // javari-logo, which is on the newer ones, reported six errors from it. The
+        // bytes are identical — this is purely about which type the signature will
+        // accept, and wrapping satisfies both versions rather than pinning either.
+        const salt = new Uint8Array(Buffer.from(env.salt, "hex"));
+        const iv = new Uint8Array(Buffer.from(env.iv, "hex"));
+        const tag = new Uint8Array(Buffer.from(env.tag, "hex"));
+        const ct = new Uint8Array(Buffer.from(env.ct, "hex"));
+
+        const derived = (await pbkdf2Async(
           material,
-          Buffer.from(env.salt, "hex"),
+          salt,
           ITERATIONS,
           KEY_LEN,
           "sha256",
         )) as Buffer;
-        const d = createDecipheriv(ALGORITHM, key, Buffer.from(env.iv, "hex"));
-        d.setAuthTag(Buffer.from(env.tag, "hex"));
+
+        const d = createDecipheriv(ALGORITHM, new Uint8Array(derived), iv);
+        d.setAuthTag(tag);
         out[row.name] = Buffer.concat([
-          d.update(Buffer.from(env.ct, "hex")),
-          d.final(),
+          new Uint8Array(d.update(ct)),
+          new Uint8Array(d.final()),
         ]).toString("utf8");
       } catch {
         // Wrong key or tampered ciphertext for this row only.
