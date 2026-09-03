@@ -1,6 +1,8 @@
 {
   "extends": "@craudioviz/platform-sdk/config/tsconfig.base.json",
   "compilerOptions": {
+    "strict": true,
+    "target": "ES2020",
     "paths": {
       "@/*": [
         "./*"
