@@ -1,5 +1,33 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // 2026-09-03: security headers. An ecosystem sweep with Javari Verify found this
+  // app serving none of them - no CSP, no HSTS, no frame protection - while every
+  // other app in the fleet had at least four since August. This one has no
+  // headers() block at all, which is why the fleet-wide patch could not reach it:
+  // that pass inserted next to an existing X-Frame-Options line.
+  //
+  // HSTS enforces immediately; it only tells the browser to refuse plaintext. CSP
+  // ships Report-Only first so a policy that blocks something this app needs
+  // reports it rather than breaking it.
+  //
+  // connect-src includes Sentry because this app reports to it - a CSP that blocks
+  // your own error reporting hides the next incident.
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+          { key: 'Content-Security-Policy-Report-Only', value: `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.ingest.sentry.io; frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests` },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+        ],
+      },
+    ];
+  },
+
   typescript: { ignoreBuildErrors: true },
   eslint: { ignoreDuringBuilds: true },
 
