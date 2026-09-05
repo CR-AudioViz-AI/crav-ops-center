@@ -12,7 +12,7 @@
   "dependencies": {
     "@craudioviz/platform-sdk": "git+https://github.com/CR-AudioViz-AI/platform-sdk.git",
     "@sentry/nextjs": "^10.70.0",
-    "lucide-react": "^0.577.0",
+    "lucide-react": "^1.33.0",
     "next": "14.2.35",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
